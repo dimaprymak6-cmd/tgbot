@@ -1,4 +1,5 @@
-import asyncio, requests, os
+Вот полный код:
+import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -34,19 +35,11 @@ def get_currency():
         def extract(code, name):
             try:
                 block = text.split(code)[1]
-                parts = block.split("cumpăr")[1]
-                nums = []
-                for x in parts.replace('|', '/').replace('-', '/').replace(',', '.').split('/'):
-                    x = x.strip()
-                    try:
-                        val = float(x)
-                        nums.append(str(val))
-                    except:
-                        pass
-                    if len(nums) == 2:
-                        break
+                part = block.split("cumpăr")[1][:100]
+                nums = re.findall(r'\d+[.,]\d+', part)
+                nums = [n.replace(',', '.') for n in nums]
                 if len(nums) >= 2:
-                    return f"{name}: покупка {nums[0]} / продажа {nums[1]}\n"
+                    return f"{name}: {nums[0]} — {nums[1]}\n"
                 return f"{name}: —\n"
             except:
                 return f"{name}: —\n"
