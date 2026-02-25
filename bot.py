@@ -1,11 +1,10 @@
-import asyncio, requests
+import asyncio, requests, os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import os
 
-TOKEN = os.environ.get("TOKEN")
-WEATHER_API = os.environ.get("WEATHER_API")
+TOKEN = os.environ.get("TOKEN", "8586861556:AAEYOaKID0k_Bv-mIZig5Yp3kMEbS0eVEZQ")
+WEATHER_API = os.environ.get("WEATHER_API", "db93a633773056c78b88f66ea8207d9f")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -14,51 +13,139 @@ user_settings = {}
 
 def get_weather(city):
     try:
-        r = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API}&units=metric&lang=ru").json()
-        return f"🌤 {r['weather'][0]['description']} {r['main']['temp']}°C"
+        r = requests.get(
+            "http://api.openweathermap.org/data/2.5/weather",
+            params={"q": city, "appid": WEATHER_API, "units": "metric", "lang": "ru"}
+        ).json()
+        desc = r['weather'][0]['description']
+        temp = r['main']['temp']
+        feels = r['main']['feels_like']
+        humidity = r['main']['humidity']
+        return f"🌤 Погода: {desc}\n🌡 {temp}°C (ощущается {feels}°C)\n💧 Влажность: {humidity}%"
     except:
-        return "Ошибка погоды"
+        return "❌ Ошибка погоды"
 
 def get_currency():
     try:
-        data = requests.get("https://www.bnm.md/ro/official_exchange_rates?get_xml=1").text
-        eur = data.split('EUR')[1].split('value="')[1].split('"')[0]
-        usd = data.split('USD')[1].split('value="')[1].split('"')[0]
-        return f"💱 EUR:{eur} USD:{usd} MDL:1.00"
+        data = requests.get("https://www.bnm.md/ro/official_exchange_rates?get_xml=1", timeout=10).text
+        result = "💱 Курс валют (MDL):\n"
+        currencies = {"EUR": "🇪🇺 EUR", "USD": "🇺🇸 USD", "GBP": "🇬🇧 GBP", "RON": "🇷🇴 RON", "UAH": "🇺🇦 UAH"}
+        for code, name in currencies.items():
+            try:
+                val = data.split(f'<CharCode>{code}</CharCode>')[1].split('<Value>')[1].split('</Value>')[0]
+                nom = data.split(f'<CharCode>{code}</CharCode>')[1].split('<Nominal>')[1].split('</Nominal>')[0]
+                result += f"{name}: {val} (за {nom})\n"
+            except:
+                result += f"{name}: —\n"
+        return result
     except:
-        return "Ошибка курса"
+        return "❌ Ошибка курса валют"
 
-def get_roads(): return "🚗 Пробки: средние"
+def get_roads(city):
+    return f"🚗 Дороги в {city}: данные недоступны в бесплатном режиме"
 
 async def send_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
-    txt = f"📍 {city}\n{get_weather(city)}\n{get_currency()}\n{get_roads()}"
-    await bot.send_message(uid, txt)
+    text = (
+        f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
+        f"{get_weather(city)}\n\n"
+        f"{get_currency()}\n"
+        f"{get_roads(city)}"
+    )
+    await bot.send_message(uid, text)
+
+def reschedule(uid):
+    job_id = f"report_{uid}"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+    hour = user_settings.get(uid, {}).get("hour", 7)
+    minute = user_settings.get(uid, {}).get("minute", 0)
+    scheduler.add_job(
+        send_report, "cron",
+        hour=hour, minute=minute,
+        args=[uid], id=job_id
+    )
 
 @dp.message(Command("start"))
 async def start(m: types.Message):
-    user_settings[m.from_user.id] = {"city": "Edinet"}
-    await m.answer("✅ Бот активирован!\n/now — отчёт сейчас\n/setcity — сменить город")
+    uid = m.from_user.id
+    user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
+    reschedule(uid)
+    await m.answer(
+        "✅ Бот активирован!\n\n"
+        "Каждый день в 7:00 буду присылать сводку по городу Единцы.\n\n"
+        "Команды:\n"
+        "/now — сводка прямо сейчас\n"
+        "/setcity — сменить город\n"
+        "/settime — сменить время оповещения\n"
+        "/settings — текущие настройки"
+    )
 
-@dp.message(Command("setcity"))
-async def setcity(m: types.Message):
-    await m.answer("Введите название города:")
+@dp.message(Command("settings"))
+async def settings(m: types.Message):
+    uid = m.from_user.id
+    s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
+    await m.answer(
+        f"⚙️ Текущие настройки:\n"
+        f"🏙 Город: {s.get('city', 'Edinet')}\n"
+        f"⏰ Время: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}"
+    )
 
 @dp.message(Command("now"))
 async def now(m: types.Message):
     await send_report(m.from_user.id)
 
+@dp.message(Command("setcity"))
+async def setcity(m: types.Message):
+    uid = m.from_user.id
+    if uid not in user_settings:
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
+    user_settings[uid]["waiting"] = "city"
+    await m.answer("🏙 Введите название города на английском (например: Chisinau, Balti, Bucuresti):")
+
+@dp.message(Command("settime"))
+async def settime(m: types.Message):
+    uid = m.from_user.id
+    if uid not in user_settings:
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
+    user_settings[uid]["waiting"] = "time"
+    await m.answer("⏰ Введите время в формате ЧЧ:ММ (например: 07:00 или 08:30):")
+
 @dp.message()
-async def save(m: types.Message):
-    user_settings[m.from_user.id] = {"city": m.text}
-    await m.answer(f"✅ Город изменён на: {m.text}")
+async def handle_input(m: types.Message):
+    uid = m.from_user.id
+    waiting = user_settings.get(uid, {}).get("waiting")
+
+    if waiting == "city":
+        user_settings[uid]["city"] = m.text
+        user_settings[uid]["waiting"] = None
+        await m.answer(f"✅ Город изменён на: {m.text}")
+
+    elif waiting == "time":
+        try:
+            parts = m.text.strip().split(":")
+            hour = int(parts[0])
+            minute = int(parts[1])
+            if 0 <= hour <= 23 and 0 <= minute <= 59:
+                user_settings[uid]["hour"] = hour
+                user_settings[uid]["minute"] = minute
+                user_settings[uid]["waiting"] = None
+                reschedule(uid)
+                await m.answer(f"✅ Время изменено на: {hour:02d}:{minute:02d}")
+            else:
+                await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+        except:
+            await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+    else:
+        await m.answer(
+            "Команды:\n"
+            "/now — сводка прямо сейчас\n"
+            "/setcity — сменить город\n"
+            "/settime — сменить время\n"
+            "/settings — текущие настройки"
+        )
 
 async def main():
-    scheduler.add_job(
-        lambda: [asyncio.create_task(send_report(uid)) for uid in user_settings.keys()],
-        "cron", hour=6, minute=0
-    )
-    scheduler.start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
