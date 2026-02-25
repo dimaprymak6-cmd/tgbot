@@ -13,6 +13,7 @@ WEATHER_API = os.environ.get("WEATHER_API")
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+# Часовой пояс Молдовы
 timezone = pytz.timezone("Europe/Chisinau")
 scheduler = AsyncIOScheduler(timezone=timezone)
 
@@ -48,8 +49,12 @@ def get_weather(city):
 # ================= КУРС ВАЛЮТ =================
 def get_currency():
     try:
-        r = requests.get("https://api.exchangerate.host/latest?base=MDL", timeout=10)
+        r = requests.get("https://open.er-api.com/v6/latest/MDL", timeout=10)
         data = r.json()
+
+        if data["result"] != "success":
+            return "❌ Ошибка получения курса валют"
+
         rates = data["rates"]
 
         usd = round(1 / rates["USD"], 2)
@@ -66,122 +71,14 @@ def get_currency():
             f"🇺🇦 Гривна: {uah}\n"
             f"🇬🇧 Фунт стерлинг: {gbp}"
         )
+
     except:
         return "❌ Ошибка получения курса валют"
 
+# ================= ДОРОГИ =================
 def get_roads(city):
     return f"🚗 Дороги в {city}: данные недоступны"
 
 # ================= ОТПРАВКА ОТЧЁТА =================
 async def send_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet,MD")
-
-    text = (
-        f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
-        f"{get_weather(city)}\n\n"
-        f"{get_currency()}\n\n"
-        f"{get_roads(city)}"
-    )
-
-    await bot.send_message(uid, text)
-
-# ================= ПЕРЕНАЗНАЧЕНИЕ ВРЕМЕНИ =================
-def reschedule(uid):
-    job_id = f"report_{uid}"
-
-    if scheduler.get_job(job_id):
-        scheduler.remove_job(job_id)
-
-    hour = user_settings[uid]["hour"]
-    minute = user_settings[uid]["minute"]
-
-    trigger = CronTrigger(hour=hour, minute=minute, timezone=timezone)
-
-    scheduler.add_job(
-        send_report,
-        trigger,
-        args=[uid],
-        id=job_id
-    )
-
-# ================= КОМАНДЫ =================
-@dp.message(Command("start"))
-async def start(m: types.Message):
-    uid = m.from_user.id
-
-    user_settings[uid] = {
-        "city": "Edinet,MD",
-        "hour": 7,
-        "minute": 0,
-        "waiting": None
-    }
-
-    reschedule(uid)
-
-    await m.answer(
-        "✅ Бот активирован!\n\n"
-        "Команды:\n"
-        "/now — сводка сейчас\n"
-        "/setcity — сменить город\n"
-        "/settime — сменить время\n"
-        "/settings — настройки"
-    )
-
-@dp.message(Command("settings"))
-async def settings_cmd(m: types.Message):
-    uid = m.from_user.id
-    s = user_settings.get(uid)
-
-    await m.answer(
-        f"⚙️ Настройки:\n"
-        f"🏙 Город: {s['city']}\n"
-        f"⏰ Время: {s['hour']:02d}:{s['minute']:02d}"
-    )
-
-@dp.message(Command("now"))
-async def now_cmd(m: types.Message):
-    await send_report(m.from_user.id)
-
-@dp.message(Command("setcity"))
-async def setcity(m: types.Message):
-    uid = m.from_user.id
-    user_settings[uid]["waiting"] = "city"
-    await m.answer("Введите город на английском:")
-
-@dp.message(Command("settime"))
-async def settime(m: types.Message):
-    uid = m.from_user.id
-    user_settings[uid]["waiting"] = "time"
-    await m.answer("Введите время в формате ЧЧ:ММ (например 07:30):")
-
-@dp.message()
-async def handle_input(m: types.Message):
-    uid = m.from_user.id
-    waiting = user_settings.get(uid, {}).get("waiting")
-
-    if waiting == "city":
-        user_settings[uid]["city"] = m.text
-        user_settings[uid]["waiting"] = None
-        await m.answer(f"✅ Город изменён на {m.text}")
-
-    elif waiting == "time":
-        try:
-            hour, minute = map(int, m.text.split(":"))
-
-            if 0 <= hour <= 23 and 0 <= minute <= 59:
-                user_settings[uid]["hour"] = hour
-                user_settings[uid]["minute"] = minute
-                user_settings[uid]["waiting"] = None
-                reschedule(uid)
-                await m.answer(f"✅ Время изменено на {hour:02d}:{minute:02d}")
-            else:
-                await m.answer("❌ Неверный формат")
-        except:
-            await m.answer("❌ Введите время как 07:30")
-
-async def main():
-    scheduler.start()
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
