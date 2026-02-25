@@ -18,6 +18,16 @@ scheduler = AsyncIOScheduler(timezone=timezone)
 
 user_settings = {}
 
+# ======== ВСПОМОГАТЕЛЬНАЯ ========
+def ensure_user(uid):
+    if uid not in user_settings:
+        user_settings[uid] = {
+            "city": "Edinet,MD",
+            "hour": 7,
+            "minute": 0,
+            "waiting": None
+        }
+
 # ================= ПОГОДА =================
 def get_weather(city):
     try:
@@ -32,51 +42,39 @@ def get_weather(city):
             timeout=10
         ).json()
 
-        desc = r['weather'][0]['description']
-        temp = r['main']['temp']
-        feels = r['main']['feels_like']
-        humidity = r['main']['humidity']
-
         return (
-            f"🌤 Погода: {desc}\n"
-            f"🌡 {temp}°C (ощущается {feels}°C)\n"
-            f"💧 Влажность: {humidity}%"
+            f"🌤 Погода: {r['weather'][0]['description']}\n"
+            f"🌡 {r['main']['temp']}°C (ощущается {r['main']['feels_like']}°C)\n"
+            f"💧 Влажность: {r['main']['humidity']}%"
         )
     except:
         return "❌ Ошибка получения погоды"
 
-# ================= КУРС ВАЛЮТ =================
+# ================= КУРС =================
 def get_currency():
     try:
         r = requests.get("https://api.exchangerate-api.com/v4/latest/MDL", timeout=10)
         data = r.json()
-
         rates = data["rates"]
-
-        usd = round(1 / rates["USD"], 2)
-        eur = round(1 / rates["EUR"], 2)
-        ron = round(1 / rates["RON"], 2)
-        uah = round(1 / rates["UAH"], 2)
-        gbp = round(1 / rates["GBP"], 2)
 
         return (
             f"💱 Курс валют (1 ед. = MDL):\n"
-            f"🇺🇸 Доллар США: {usd}\n"
-            f"🇪🇺 Евро: {eur}\n"
-            f"🇷🇴 Лей румынский: {ron}\n"
-            f"🇺🇦 Гривна: {uah}\n"
-            f"🇬🇧 Фунт стерлинг: {gbp}"
+            f"🇺🇸 Доллар США: {round(1/rates['USD'],2)}\n"
+            f"🇪🇺 Евро: {round(1/rates['EUR'],2)}\n"
+            f"🇷🇴 Лей румынский: {round(1/rates['RON'],2)}\n"
+            f"🇺🇦 Гривна: {round(1/rates['UAH'],2)}\n"
+            f"🇬🇧 Фунт стерлинг: {round(1/rates['GBP'],2)}"
         )
-    except Exception as e:
+    except:
         return "❌ Ошибка получения курса валют"
 
-# ================= ДОРОГИ =================
 def get_roads(city):
     return f"🚗 Дороги в {city}: данные недоступны"
 
 # ================= ОТПРАВКА =================
 async def send_report(uid):
-    city = user_settings.get(uid, {}).get("city", "Edinet,MD")
+    ensure_user(uid)
+    city = user_settings[uid]["city"]
 
     text = (
         f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
@@ -89,6 +87,8 @@ async def send_report(uid):
 
 # ================= ПЕРЕНАЗНАЧЕНИЕ =================
 def reschedule(uid):
+    ensure_user(uid)
+
     job_id = f"report_{uid}"
 
     if scheduler.get_job(job_id):
@@ -110,14 +110,7 @@ def reschedule(uid):
 @dp.message(Command("start"))
 async def start_cmd(m: types.Message):
     uid = m.from_user.id
-
-    user_settings[uid] = {
-        "city": "Edinet,MD",
-        "hour": 7,
-        "minute": 0,
-        "waiting": None
-    }
-
+    ensure_user(uid)
     reschedule(uid)
 
     await m.answer(
@@ -132,7 +125,9 @@ async def start_cmd(m: types.Message):
 @dp.message(Command("settings"))
 async def settings_cmd(m: types.Message):
     uid = m.from_user.id
-    s = user_settings.get(uid)
+    ensure_user(uid)
+
+    s = user_settings[uid]
 
     await m.answer(
         f"⚙️ Настройки:\n"
@@ -147,29 +142,33 @@ async def now_cmd(m: types.Message):
 @dp.message(Command("setcity"))
 async def setcity_cmd(m: types.Message):
     uid = m.from_user.id
+    ensure_user(uid)
     user_settings[uid]["waiting"] = "city"
-    await m.answer("Введите город на английском:")
+    await m.answer("Введите город на английском (например Chisinau, Balti):")
 
 @dp.message(Command("settime"))
 async def settime_cmd(m: types.Message):
     uid = m.from_user.id
+    ensure_user(uid)
     user_settings[uid]["waiting"] = "time"
-    await m.answer("Введите время в формате ЧЧ:ММ:")
+    await m.answer("Введите время в формате ЧЧ:ММ (например 08:30):")
 
 @dp.message()
 async def handle_input(m: types.Message):
     uid = m.from_user.id
-    waiting = user_settings.get(uid, {}).get("waiting")
+    ensure_user(uid)
+
+    waiting = user_settings[uid]["waiting"]
 
     if waiting == "city":
-        user_settings[uid]["city"] = m.text
+        user_settings[uid]["city"] = m.text.strip()
         user_settings[uid]["waiting"] = None
+        reschedule(uid)
         await m.answer(f"✅ Город изменён на {m.text}")
 
     elif waiting == "time":
         try:
             hour, minute = map(int, m.text.split(":"))
-
             if 0 <= hour <= 23 and 0 <= minute <= 59:
                 user_settings[uid]["hour"] = hour
                 user_settings[uid]["minute"] = minute
@@ -179,11 +178,4 @@ async def handle_input(m: types.Message):
             else:
                 await m.answer("❌ Неверный формат")
         except:
-            await m.answer("❌ Введите время как 07:30")
-
-async def main():
-    scheduler.start()
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+            await m.answer("❌ Введите время как 07
