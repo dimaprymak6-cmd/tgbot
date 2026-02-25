@@ -3,7 +3,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-TOKEN = os.environ.get("TOKEN", "8586861556:AAEYOaKID0k_Bv-mIZig5Yp3kMEbS0eVEZQ")
+TOKEN = os.environ.get("TOKEN", "8586861556:AAEYOaKID0k_Bv-mlZig5Yp3kMEbS0eVEZQ")
 WEATHER_API = os.environ.get("WEATHER_API", "db93a633773056c78b88f66ea8207d9f")
 
 bot = Bot(token=TOKEN)
