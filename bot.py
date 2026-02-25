@@ -3,8 +3,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-TOKEN = os.environ.get("TOKEN", "8586861556:AAEYOaKID0k_Bv-mlZig5Yp3kMEbS0eVEZQ")
-WEATHER_API = os.environ.get("WEATHER_API", "db93a633773056c78b88f66ea8207d9f")
+TOKEN = os.environ.get("TOKEN")
+WEATHER_API = os.environ.get("WEATHER_API")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -27,16 +27,35 @@ def get_weather(city):
 
 def get_currency():
     try:
-        data = requests.get("https://www.bnm.md/ro/official_exchange_rates?get_xml=1", timeout=10).text
+        r = requests.get("https://www.deghest.md/curscentru", timeout=10)
+        text = r.text
         result = "💱 Курс валют (MDL):\n"
-        currencies = {"EUR": "🇪🇺 EUR", "USD": "🇺🇸 USD", "GBP": "🇬🇧 GBP", "RON": "🇷🇴 RON", "UAH": "🇺🇦 UAH"}
-        for code, name in currencies.items():
+
+        def extract(code, name):
             try:
-                val = data.split(f'<CharCode>{code}</CharCode>')[1].split('<Value>')[1].split('</Value>')[0]
-                nom = data.split(f'<CharCode>{code}</CharCode>')[1].split('<Nominal>')[1].split('</Nominal>')[0]
-                result += f"{name}: {val} (за {nom})\n"
+                block = text.split(code)[1]
+                parts = block.split("cumpăr")[1]
+                nums = []
+                for x in parts.replace('|', '/').replace('-', '/').replace(',', '.').split('/'):
+                    x = x.strip()
+                    try:
+                        val = float(x)
+                        nums.append(str(val))
+                    except:
+                        pass
+                    if len(nums) == 2:
+                        break
+                if len(nums) >= 2:
+                    return f"{name}: покупка {nums[0]} / продажа {nums[1]}\n"
+                return f"{name}: —\n"
             except:
-                result += f"{name}: —\n"
+                return f"{name}: —\n"
+
+        result += extract("USD", "🇺🇸 USD")
+        result += extract("EUR", "🇪🇺 EUR")
+        result += extract("RON", "🇷🇴 RON")
+        result += extract("UAH", "🇺🇦 UAH")
+        result += extract("GBP", "🇬🇧 GBP")
         return result
     except:
         return "❌ Ошибка курса валют"
@@ -73,7 +92,7 @@ async def start(m: types.Message):
     reschedule(uid)
     await m.answer(
         "✅ Бот активирован!\n\n"
-        "Каждый день в 7:00 буду присылать сводку по городу Единцы.\n\n"
+        "Каждый день в 7:00 буду присылать сводку.\n\n"
         "Команды:\n"
         "/now — сводка прямо сейчас\n"
         "/setcity — сменить город\n"
@@ -146,6 +165,7 @@ async def handle_input(m: types.Message):
         )
 
 async def main():
+    scheduler.start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
