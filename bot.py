@@ -2,6 +2,7 @@ import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import date
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
@@ -10,6 +11,37 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 user_settings = {}
+
+HOLIDAYS = {
+    (1, 1): "🎊 Новый год",
+    (1, 7): "🎄 Рождество Христово (православное)",
+    (1, 8): "🎄 Рождество Христово (второй день)",
+    (3, 8): "🌸 Международный женский день",
+    (5, 1): "💼 День труда",
+    (5, 9): "🎖 День Победы",
+    (6, 1): "👶 День защиты детей",
+    (8, 27): "🇲🇩 День независимости Молдовы",
+    (8, 31): "🗣 День языка",
+    (12, 25): "🎄 Рождество Христово (католическое)",
+}
+
+DAYS_RU = {
+    0: "Понедельник", 1: "Вторник", 2: "Среда",
+    3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"
+}
+
+def get_day_info():
+    today = date.today()
+    day_name = DAYS_RU[today.weekday()]
+    date_str = today.strftime("%d.%m.%Y")
+    holiday = HOLIDAYS.get((today.month, today.day), "")
+    
+    result = f"📅 {day_name}, {date_str}"
+    if today.weekday() >= 5:
+        result += " — 🎉 Выходной!"
+    if holiday:
+        result += f"\n{holiday}"
+    return result
 
 def get_weather(city):
     try:
@@ -61,6 +93,25 @@ def get_currency():
     except:
         return "❌ Ошибка курса валют"
 
+def get_fuel():
+    try:
+        r = requests.get("https://www.anre.md/ro/info/combustibil", timeout=10)
+        text = r.text
+        petrol = re.findall(r'Benzin[^<]*<[^>]+>([0-9,.]+)', text)
+        diesel = re.findall(r'Motorin[^<]*<[^>]+>([0-9,.]+)', text)
+        result = "⛽ Цены на топливо (MDL/л):\n"
+        if petrol:
+            result += f"🟡 Бензин: {petrol[0]}\n"
+        else:
+            result += "🟡 Бензин: —\n"
+        if diesel:
+            result += f"🔵 Дизель: {diesel[0]}"
+        else:
+            result += "🔵 Дизель: —"
+        return result
+    except:
+        return "⛽ Цены на топливо: данные недоступны"
+
 def get_roads(city):
     city_maps = {
         "Edinet": "https://maps.app.goo.gl/EdnKLvxQ8vKQ3WNPA",
@@ -73,9 +124,11 @@ def get_roads(city):
 async def send_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
     text = (
+        f"{get_day_info()}\n\n"
         f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
         f"{get_weather(city)}\n\n"
         f"{get_currency()}\n\n"
+        f"{get_fuel()}\n\n"
         f"{get_roads(city)}"
     )
     await bot.send_message(uid, text)
