@@ -62,7 +62,64 @@ def get_currency():
         return "❌ Ошибка курса валют"
 
 def get_roads(city):
-    return f"🚗 Дороги в {city}: данные недоступны в бесплатном режиме"
+    try:
+        coords = {
+            "Edinet": (48.1689, 27.3047),
+            "Chisinau": (47.0105, 28.8638),
+            "Balti": (47.7617, 27.9294),
+            "Cahul": (45.9047, 28.2086),
+            "Orhei": (47.3817, 28.8269),
+        }
+        lat, lon = coords.get(city, (48.1689, 27.3047))
+        
+        url = (
+            f"https://www.waze.com/row-rtserver/web/TGeoRSS"
+            f"?tk=ccp_dd&format=JSON"
+            f"&left={lon-0.1}&right={lon+0.1}"
+            f"&bottom={lat-0.1}&top={lat+0.1}"
+            f"&types=alerts,traffic"
+        )
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"}).json()
+        
+        alerts = r.get("alerts", [])
+        jams = r.get("jams", [])
+        
+        type_map = {
+            "ACCIDENT": "🚗 Авария",
+            "JAM": "🚦 Пробка",
+            "ROAD_CLOSED": "🚧 Дорога закрыта",
+            "HAZARD": "⚠️ Опасность",
+            "POLICE": "🚓 Полиция",
+            "CONSTRUCTION": "🏗 Ремонт дороги",
+        }
+        
+        result = f"🛣 Дороги в {city}:\n"
+        
+        if not alerts and not jams:
+            result += "✅ Инцидентов не обнаружено"
+            return result
+        
+        shown = 0
+        for alert in alerts[:5]:
+            atype = alert.get("type", "")
+            subtype = alert.get("subtype", "")
+            label = type_map.get(atype, f"⚠️ {atype}")
+            street = alert.get("street", "")
+            if street:
+                result += f"{label} на {street}\n"
+            else:
+                result += f"{label}\n"
+            shown += 1
+        
+        if jams:
+            result += f"🚦 Пробок: {len(jams)} участков\n"
+        
+        if shown == 0 and not jams:
+            result += "✅ Инцидентов не обнаружено"
+        
+        return result.strip()
+    except:
+        return f"🛣 Дороги в {city}: данные недоступны"
 
 async def send_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
