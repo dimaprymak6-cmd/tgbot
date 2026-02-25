@@ -33,7 +33,7 @@ def get_currency():
         def extract(code):
             try:
                 block = text.split(code)[1]
-                part = block.split("cumpăr")[1][:200]
+                part = block.split("cumpăr")[1][:300]
                 nums = re.findall(r'\d{1,2}[.,]\d{2,3}', part)
                 nums = [n.replace(',', '.') for n in nums]
                 if len(nums) >= 2:
@@ -62,64 +62,13 @@ def get_currency():
         return "❌ Ошибка курса валют"
 
 def get_roads(city):
-    try:
-        coords = {
-            "Edinet": (48.1689, 27.3047),
-            "Chisinau": (47.0105, 28.8638),
-            "Balti": (47.7617, 27.9294),
-            "Cahul": (45.9047, 28.2086),
-            "Orhei": (47.3817, 28.8269),
-        }
-        lat, lon = coords.get(city, (48.1689, 27.3047))
-        
-        url = (
-            f"https://www.waze.com/row-rtserver/web/TGeoRSS"
-            f"?tk=ccp_dd&format=JSON"
-            f"&left={lon-0.1}&right={lon+0.1}"
-            f"&bottom={lat-0.1}&top={lat+0.1}"
-            f"&types=alerts,traffic"
-        )
-        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"}).json()
-        
-        alerts = r.get("alerts", [])
-        jams = r.get("jams", [])
-        
-        type_map = {
-            "ACCIDENT": "🚗 Авария",
-            "JAM": "🚦 Пробка",
-            "ROAD_CLOSED": "🚧 Дорога закрыта",
-            "HAZARD": "⚠️ Опасность",
-            "POLICE": "🚓 Полиция",
-            "CONSTRUCTION": "🏗 Ремонт дороги",
-        }
-        
-        result = f"🛣 Дороги в {city}:\n"
-        
-        if not alerts and not jams:
-            result += "✅ Инцидентов не обнаружено"
-            return result
-        
-        shown = 0
-        for alert in alerts[:5]:
-            atype = alert.get("type", "")
-            subtype = alert.get("subtype", "")
-            label = type_map.get(atype, f"⚠️ {atype}")
-            street = alert.get("street", "")
-            if street:
-                result += f"{label} на {street}\n"
-            else:
-                result += f"{label}\n"
-            shown += 1
-        
-        if jams:
-            result += f"🚦 Пробок: {len(jams)} участков\n"
-        
-        if shown == 0 and not jams:
-            result += "✅ Инцидентов не обнаружено"
-        
-        return result.strip()
-    except:
-        return f"🛣 Дороги в {city}: данные недоступны"
+    city_maps = {
+        "Edinet": "https://maps.app.goo.gl/EdnKLvxQ8vKQ3WNPA",
+        "Chisinau": "https://maps.app.goo.gl/9XvH2mK3Q8vKQ3WNP",
+        "Balti": "https://maps.app.goo.gl/BaltiMapLink",
+    }
+    link = city_maps.get(city, f"https://www.google.com/maps/search/{city}+Moldova")
+    return f"🛣 Дороги в {city}:\n🗺 Смотри трафик: {link}"
 
 async def send_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
