@@ -1,4 +1,3 @@
-Вот полный код:
 import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -30,26 +29,33 @@ def get_currency():
     try:
         r = requests.get("https://www.deghest.md/curscentru", timeout=10)
         text = r.text
-        result = "💱 Курс валют (MDL):\n"
 
-        def extract(code, name):
+        def extract(code):
             try:
                 block = text.split(code)[1]
-                part = block.split("cumpăr")[1][:100]
-                nums = re.findall(r'\d+[.,]\d+', part)
+                part = block.split("cumpăr")[1][:150]
+                nums = re.findall(r'\d{1,2}[.,]\d{2}', part)
                 nums = [n.replace(',', '.') for n in nums]
                 if len(nums) >= 2:
-                    return f"{name}: {nums[0]} — {nums[1]}\n"
-                return f"{name}: —\n"
+                    return f"{nums[0]} / {nums[1]}"
+                return "—"
             except:
-                return f"{name}: —\n"
+                return "—"
 
-        result += extract("USD", "🇺🇸 USD")
-        result += extract("EUR", "🇪🇺 EUR")
-        result += extract("RON", "🇷🇴 RON")
-        result += extract("UAH", "🇺🇦 UAH")
-        result += extract("GBP", "🇬🇧 GBP")
-        return result
+        usd = extract("USD")
+        eur = extract("EUR")
+        ron = extract("RON")
+        uah = extract("UAH")
+        gbp = extract("GBP")
+
+        return (
+            f"💱 Курс валют (покупка / продажа MDL):\n"
+            f"🇺🇸 Доллар США:   {usd}\n"
+            f"🇪🇺 Евро:              {eur}\n"
+            f"🇷🇴 Лей румынский: {ron}\n"
+            f"🇺🇦 Гривна:           {uah}\n"
+            f"🇬🇧 Фунт стерл.:    {gbp}"
+        )
     except:
         return "❌ Ошибка курса валют"
 
@@ -61,7 +67,7 @@ async def send_report(uid):
     text = (
         f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
         f"{get_weather(city)}\n\n"
-        f"{get_currency()}\n"
+        f"{get_currency()}\n\n"
         f"{get_roads(city)}"
     )
     await bot.send_message(uid, text)
