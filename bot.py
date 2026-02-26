@@ -1,13 +1,14 @@
 import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
+from aiogram.client.default import DefaultBotProperties
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
 
-bot = Bot(token=TOKEN)
+bot = Bot(token=TOKEN, default=DefaultBotProperties())
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 user_settings = {}
@@ -35,7 +36,6 @@ def get_day_info():
     day_name = DAYS_RU[today.weekday()]
     date_str = today.strftime("%d.%m.%Y")
     holiday = HOLIDAYS.get((today.month, today.day), "")
-    
     result = f"📅 {day_name}, {date_str}"
     if today.weekday() >= 5:
         result += " — 🎉 Выходной!"
@@ -95,19 +95,17 @@ def get_currency():
 
 def get_fuel():
     try:
-        r = requests.get("https://www.anre.md/ro/info/combustibil", timeout=10)
+        r = requests.get(
+            "https://www.bnm.md/ro/content/preturile-la-produsele-petroliere",
+            timeout=10,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
         text = r.text
-        petrol = re.findall(r'Benzin[^<]*<[^>]+>([0-9,.]+)', text)
-        diesel = re.findall(r'Motorin[^<]*<[^>]+>([0-9,.]+)', text)
+        benzin = re.findall(r'Benzin\s*A-95[^0-9]*([0-9]+[.,][0-9]+)', text)
+        motorina = re.findall(r'Motorin[^0-9]*([0-9]+[.,][0-9]+)', text)
         result = "⛽ Цены на топливо (MDL/л):\n"
-        if petrol:
-            result += f"🟡 Бензин: {petrol[0]}\n"
-        else:
-            result += "🟡 Бензин: —\n"
-        if diesel:
-            result += f"🔵 Дизель: {diesel[0]}"
-        else:
-            result += "🔵 Дизель: —"
+        result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин: —\n"
+        result += f"🔵 Дизель: {motorina[0].replace(',', '.')}" if motorina else "🔵 Дизель: —"
         return result
     except:
         return "⛽ Цены на топливо: данные недоступны"
@@ -226,8 +224,9 @@ async def handle_input(m: types.Message):
         )
 
 async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
     scheduler.start()
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
     asyncio.run(main())
