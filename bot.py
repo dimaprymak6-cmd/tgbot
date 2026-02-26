@@ -2,7 +2,8 @@ import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import date
+from datetime import date, datetime
+import random
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
@@ -11,6 +12,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 user_settings = {}
+last_sent = {}
 
 HOLIDAYS = {
     (1, 1): "🎊 Новый год",
@@ -29,6 +31,19 @@ DAYS_RU = {
     0: "Понедельник", 1: "Вторник", 2: "Среда",
     3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"
 }
+
+FACTS = [
+    "💡 Факт дня: Единцы основаны в 1774 году и названы по реке Единец.",
+    "💡 Факт дня: Молдова — один из крупнейших производителей вина в мире.",
+    "💡 Факт дня: В Молдове находится самый большой в мире подземный винный погреб — Милештий Мичь.",
+    "💡 Факт дня: Молдова — одна из самых маленьких стран Европы по площади.",
+    "💡 Факт дня: Средняя продолжительность жизни в Молдове — 72 года.",
+    "💡 Факт дня: В Молдове более 300 солнечных дней в году.",
+    "💡 Факт дня: Молдова граничит только с двумя странами — Румынией и Украиной.",
+    "💡 Факт дня: Национальный язык Молдовы — румынский.",
+    "💡 Факт дня: Кишинёв — один из самых зелёных городов Европы по числу деревьев.",
+    "💡 Факт дня: В Молдове производят более 50 сортов местного вина.",
+]
 
 def get_day_info():
     today = date.today()
@@ -96,12 +111,12 @@ def get_currency():
 def get_fuel():
     try:
         r = requests.get(
-            "https://esp.md/ru/fuel-rates",
+            "https://noi.md/ru/themes/ceny-na-toplivo",
             timeout=10,
             headers={"User-Agent": "Mozilla/5.0"}
         )
         text = r.text
-        benzin = re.findall(r'A-95[^0-9]*(\d{2}[.,]\d{2})', text)
+        benzin = re.findall(r'[Бб]ензин[а]?\s*А?-?95[^0-9]*(\d{2}[.,]\d{2})', text)
         dizel = re.findall(r'[Дд]изел[ьи][^0-9]*(\d{2}[.,]\d{2})', text)
         result = "⛽ Цены на топливо (MDL/л):\n"
         result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин А-95: —\n"
@@ -110,24 +125,24 @@ def get_fuel():
     except:
         return "⛽ Цены на топливо: данные недоступны"
 
-def get_roads(city):
-    city_maps = {
-        "Edinet": "https://maps.app.goo.gl/EdnKLvxQ8vKQ3WNPA",
-        "Chisinau": "https://maps.app.goo.gl/9XvH2mK3Q8vKQ3WNP",
-        "Balti": "https://maps.app.goo.gl/BaltiMapLink",
-    }
-    link = city_maps.get(city, f"https://www.google.com/maps/search/{city}+Moldova")
-    return f"🛣 Дороги в {city}:\n🗺 Смотри трафик: {link}"
+def get_fact():
+    return random.choice(FACTS)
 
-async def send_report(uid):
+async def send_report(uid, scheduled=False):
+    now = datetime.now()
+    key = f"{uid}_{now.strftime('%Y%m%d%H%M')}"
+    if scheduled and key in last_sent:
+        return
+    last_sent[key] = True
+
     city = user_settings.get(uid, {}).get("city", "Edinet")
     text = (
         f"{get_day_info()}\n\n"
-        f"🌅 Доброе утро! Ситуация в городе {city}:\n\n"
+        f"🌅 Здравствуйте! Ситуация в городе {city}:\n\n"
         f"{get_weather(city)}\n\n"
         f"{get_currency()}\n\n"
         f"{get_fuel()}\n\n"
-        f"{get_roads(city)}"
+        f"{get_fact()}"
     )
     await bot.send_message(uid, text)
 
@@ -140,7 +155,7 @@ def reschedule(uid):
     scheduler.add_job(
         send_report, "cron",
         hour=hour, minute=minute,
-        args=[uid], id=job_id,
+        args=[uid, True], id=job_id,
         replace_existing=True
     )
 
@@ -171,7 +186,7 @@ async def settings(m: types.Message):
 
 @dp.message(Command("now"))
 async def now(m: types.Message):
-    await send_report(m.from_user.id)
+    await send_report(m.from_user.id, scheduled=False)
 
 @dp.message(Command("setcity"))
 async def setcity(m: types.Message):
