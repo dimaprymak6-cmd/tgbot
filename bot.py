@@ -128,11 +128,13 @@ def get_fact():
     return random.choice(FACTS)
 
 async def send_report(uid, scheduled=False):
-    now = datetime.now()
-    key = f"{uid}_{now.strftime('%Y%m%d%H%M')}"
-    if scheduled and key in last_sent:
-        return
-    last_sent[key] = True
+    if scheduled:
+        now = datetime.now()
+        key = f"{uid}_{now.strftime('%Y%m%d%H%M')}"
+        if key in last_sent:
+            return
+        last_sent[key] = True
+
     city = user_settings.get(uid, {}).get("city", "Edinet")
     text = (
         f"{get_day_info()}\n\n"
@@ -184,7 +186,14 @@ async def settings(m: types.Message):
 
 @dp.message(Command("now"))
 async def now(m: types.Message):
-    await send_report(m.from_user.id, scheduled=False)
+    uid = m.from_user.id
+    key = f"now_{uid}"
+    if key in last_sent:
+        diff = (datetime.now() - last_sent[key]).total_seconds()
+        if diff < 10:
+            return
+    last_sent[key] = datetime.now()
+    await send_report(uid, scheduled=False)
 
 @dp.message(Command("setcity"))
 async def setcity(m: types.Message):
