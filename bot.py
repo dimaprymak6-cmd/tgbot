@@ -8,7 +8,7 @@ import fcntl
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
+ADMIN_ID = 5200690387
 
 lock_file = open("/tmp/bot.lock", "w")
 try:
@@ -80,7 +80,7 @@ def get_main_keyboard(uid=0):
         [KeyboardButton(text="📊 Сводка сейчас"), KeyboardButton(text="⚙️ Настройки")],
         [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")],
     ]
-    if uid == ADMIN_ID and ADMIN_ID != 0:
+    if uid == ADMIN_ID:
         buttons.append([KeyboardButton(text="📣 Рассылка"), KeyboardButton(text="👥 Пользователи")])
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -246,7 +246,7 @@ async def btn_settings(m: types.Message):
 async def btn_setcity(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
-        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "city"
     await m.answer("🏙 Введите название города на английском (например: Chisinau, Balti, Bucuresti):")
 
@@ -254,21 +254,27 @@ async def btn_setcity(m: types.Message):
 async def btn_settime(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
-        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "time"
     await m.answer("⏰ Введите время в формате ЧЧ:ММ (например: 07:00 или 08:30):")
 
 @dp.message(F.text == "👥 Пользователи")
 async def btn_users(m: types.Message):
-    if m.from_user.id != ADMIN_ID or ADMIN_ID == 0:
+    if m.from_user.id != ADMIN_ID:
         return
     count = len(user_settings)
-    await m.answer(f"👥 Всего пользователей: {count}", reply_markup=get_main_keyboard(m.from_user.id))
+    ids = "\n".join([f"• {uid}" for uid in user_settings.keys()])
+    await m.answer(
+        f"👥 Всего пользователей: {count}\n\n{ids}",
+        reply_markup=get_main_keyboard(m.from_user.id)
+    )
 
 @dp.message(F.text == "📣 Рассылка")
 async def btn_broadcast(m: types.Message):
-    if m.from_user.id != ADMIN_ID or ADMIN_ID == 0:
+    if m.from_user.id != ADMIN_ID:
         return
+    if m.from_user.id not in user_settings:
+        user_settings[m.from_user.id] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[m.from_user.id]["waiting"] = "broadcast"
     await m.answer("📣 Введите текст для рассылки всем пользователям:")
 
@@ -288,11 +294,12 @@ async def handle_input(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
-    waiting = user_settings.get(uid, {}).get("waiting")
+    waiting = user_settings[uid].get("waiting")
 
     if waiting == "city":
         user_settings[uid]["city"] = m.text
         user_settings[uid]["waiting"] = None
+        reschedule(uid)
         await m.answer(f"✅ Город изменён на: {m.text}", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "time":
@@ -315,7 +322,7 @@ async def handle_input(m: types.Message):
             await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
 
     elif waiting == "broadcast":
-        if uid != ADMIN_ID or ADMIN_ID == 0:
+        if uid != ADMIN_ID:
             return
         user_settings[uid]["waiting"] = None
         count = 0
@@ -323,9 +330,13 @@ async def handle_input(m: types.Message):
             try:
                 await bot.send_message(user_id, f"📣 Сообщение от администратора:\n\n{m.text}")
                 count += 1
+                await asyncio.sleep(0.1)
             except:
                 pass
-        await m.answer(f"✅ Рассылка отправлена {count} пользователям!", reply_markup=get_main_keyboard(uid))
+        await m.answer(
+            f"✅ Рассылка отправлена {count} пользователям!",
+            reply_markup=get_main_keyboard(uid)
+        )
 
     else:
         await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard(uid))
