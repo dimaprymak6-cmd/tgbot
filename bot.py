@@ -1,80 +1,97 @@
-import asyncio, requests, os, re, random, json
-from aiogram import Bot, Dispatcher, types, F
+import asyncio, requests, os, re, random, sys
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date, datetime
+import fcntl
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
 
-ADMIN_ID = 5200690387
+lock_file = open("/tmp/bot.lock", "w")
+try:
+    fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print("Другой процесс уже запущен. Выход.")
+    sys.exit(0)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
-
-DATA_FILE = "users.json"
-
-# ------------------ ЗАГРУЗКА / СОХРАНЕНИЕ ------------------
-
-def load_users():
-    if not os.path.exists(DATA_FILE):
-        return {}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
-
-def save_users():
-    with open(DATA_FILE, "w") as f:
-        json.dump(user_settings, f)
-
-user_settings = load_users()
+user_settings = {}
 last_sent = {}
-
-# ------------------ КЛАВИАТУРА ------------------
-
-def get_keyboard(uid=None):
-    keyboard = [
-        [KeyboardButton(text="📊 Сводка сейчас"), KeyboardButton(text="⚙️ Настройки")],
-        [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")]
-    ]
-
-    if uid and int(uid) == ADMIN_ID:
-        keyboard.append([KeyboardButton(text="📢 Рассылка"), KeyboardButton(text="👥 Статистика")])
-
-    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
-
-# ------------------ ДАННЫЕ ------------------
 
 HOLIDAYS = {
     (1, 1): "🎊 Новый год",
+    (1, 7): "🎄 Рождество Христово (православное)",
+    (1, 8): "🎄 Рождество Христово (второй день)",
     (3, 8): "🌸 Международный женский день",
+    (5, 1): "💼 День труда",
     (5, 9): "🎖 День Победы",
+    (6, 1): "👶 День защиты детей",
     (8, 27): "🇲🇩 День независимости Молдовы",
-    (12, 25): "🎄 Рождество (католическое)",
+    (8, 31): "🗣 День языка",
+    (12, 25): "🎄 Рождество Христово (католическое)",
+}
+
+DAYS_RU = {
+    0: "Понедельник", 1: "Вторник", 2: "Среда",
+    3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"
 }
 
 FACTS = [
-    "💡 Молдова — один из крупнейших производителей вина.",
-    "💡 Кишинёв — один из самых зелёных городов Европы.",
-    "💡 В Молдове более 300 солнечных дней в году.",
+    "💡 Факт дня: Единцы основаны в 1774 году и названы по реке Единец.",
+    "💡 Факт дня: Молдова — один из крупнейших производителей вина в мире.",
+    "💡 Факт дня: В Молдове находится самый большой в мире подземный винный погреб — Милештий Мичь.",
+    "💡 Факт дня: Молдова — одна из самых маленьких стран Европы по площади.",
+    "💡 Факт дня: В Молдове более 300 солнечных дней в году.",
+    "💡 Факт дня: Молдова граничит только с двумя странами — Румынией и Украиной.",
+    "💡 Факт дня: Кишинёв — один из самых зелёных городов Европы по числу деревьев.",
+    "💡 Факт дня: В Молдове производят более 50 сортов местного вина.",
+    "💡 Факт дня: Национальный язык Молдовы — румынский.",
+    "💡 Факт дня: Средняя продолжительность жизни в Молдове — 72 года.",
 ]
 
 UKRAINE_EVENTS = {
-    (2, 24): "🇺🇦 2022: Началось полномасштабное вторжение РФ.",
-    (8, 24): "🇺🇦 1991: Украина провозгласила независимость.",
+    (1, 1): "🇺🇦 2016: Украина перешла на безвизовый режим с Грузией.",
+    (1, 22): "🇺🇦 1918: Провозглашена независимость Украинской Народной Республики.",
+    (2, 20): "🇺🇦 2014: Самый кровавый день Майдана — погибли более 50 человек.",
+    (2, 22): "🇺🇦 2014: Янукович бежал из Украины после революции Майдан.",
+    (2, 24): "🇺🇦 2022: Россия начала полномасштабное вторжение в Украину.",
+    (2, 26): "🇺🇦 2022: Украинские силы остановили колонну российских войск под Киевом.",
+    (3, 16): "🇺🇦 2014: Незаконный референдум в Крыму организован Россией.",
+    (3, 18): "🇺🇦 2014: Россия аннексировала Крым.",
+    (4, 26): "🇺🇦 1986: Катастрофа на Чернобыльской АЭС.",
+    (5, 9): "🇺🇦 1945: День победы над нацистской Германией во Второй мировой войне.",
+    (6, 28): "🇺🇦 1996: Принята Конституция Украины.",
+    (8, 24): "🇺🇦 1991: Украина провозгласила независимость от СССР.",
+    (9, 29): "🇺🇦 1941: Массовое убийство евреев в Бабьем Яру под Киевом.",
+    (10, 14): "🇺🇦 День защитника Украины — национальный праздник.",
+    (11, 21): "🇺🇦 2013: Начало революции Евромайдан в Киеве.",
+    (11, 22): "🇺🇦 2004: Начало Оранжевой революции в Украине.",
+    (12, 1): "🇺🇦 1991: Референдум подтвердил независимость Украины — 90% за.",
+    (12, 5): "🇺🇦 1994: Подписан Будапештский меморандум — Украина отказалась от ядерного оружия.",
 }
 
 def get_day_info():
     today = date.today()
+    day_name = DAYS_RU[today.weekday()]
+    date_str = today.strftime("%d.%m.%Y")
+    week_num = today.isocalendar()[1]
     holiday = HOLIDAYS.get((today.month, today.day), "")
-    text = today.strftime("📅 %d.%m.%Y")
+    result = f"📅 {day_name}, {date_str} | Неделя #{week_num}"
+    if today.weekday() >= 5:
+        result += " — 🎉 Выходной!"
     if holiday:
-        text += f"\n{holiday}"
+        result += f"\n{holiday}"
+    return result
+
+def get_ukraine_event():
+    today = date.today()
     event = UKRAINE_EVENTS.get((today.month, today.day), "")
     if event:
-        text += f"\n{event}"
-    return text
+        return f"\n{event}"
+    return ""
 
 def get_weather(city):
     try:
@@ -86,7 +103,7 @@ def get_weather(city):
         temp = r['main']['temp']
         feels = r['main']['feels_like']
         humidity = r['main']['humidity']
-        return f"🌤 {desc}\n🌡 {temp}°C (ощущается {feels}°C)\n💧 Влажность: {humidity}%"
+        return f"🌤 Погода: {desc}\n🌡 {temp}°C (ощущается {feels}°C)\n💧 Влажность: {humidity}%"
     except:
         return "❌ Ошибка погоды"
 
@@ -98,23 +115,33 @@ def get_currency():
         def extract(code):
             try:
                 block = text.split(code)[1]
-                nums = re.findall(r'\d{1,2}[.,]\d{2,3}', block)
+                part = block.split("cumpăr")[1][:300]
+                nums = re.findall(r'\d{1,2}[.,]\d{2,3}', part)
                 nums = [n.replace(',', '.') for n in nums]
                 if len(nums) >= 2:
                     return f"{nums[0]} / {nums[1]}"
+                elif len(nums) == 1:
+                    return f"{nums[0]}"
                 return "—"
             except:
                 return "—"
 
+        usd = extract("USD")
+        eur = extract("EUR")
+        ron = extract("RON")
+        uah = extract("UAH")
+        gbp = extract("GBP")
+
         return (
-            "💱 Курс валют:\n"
-            f"USD: {extract('USD')}\n"
-            f"EUR: {extract('EUR')}\n"
-            f"RON: {extract('RON')}\n"
-            f"UAH: {extract('UAH')}"
+            f"💱 Курс валют (покупка / продажа MDL):\n"
+            f"🇺🇸 Доллар США:      {usd}\n"
+            f"🇪🇺 Евро:               {eur}\n"
+            f"🇷🇴 Лей румынский:  {ron}\n"
+            f"🇺🇦 Гривна:            {uah}\n"
+            f"🇬🇧 Фунт стерл.:     {gbp}"
         )
     except:
-        return "❌ Ошибка курса"
+        return "❌ Ошибка курса валют"
 
 def get_fuel():
     try:
@@ -124,25 +151,31 @@ def get_fuel():
             headers={"User-Agent": "Mozilla/5.0"}
         )
         text = r.text
-        benzin = re.findall(r'(?:A-95|А-95)[^0-9]*(\d{2}[.,]\d{2})', text)
-        dizel = re.findall(r'(?:дизел)[^0-9]*(\d{2}[.,]\d{2})', text)
-        result = "⛽ Топливо:\n"
-        result += f"Бензин A95: {benzin[0] if benzin else '—'}\n"
-        result += f"Дизель: {dizel[0] if dizel else '—'}"
+        benzin = re.findall(r'(?:бензин|A-95|А-95)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        dizel = re.findall(r'(?:дизел|motorin)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        result = "⛽ Цены на топливо (MDL/л):\n"
+        result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин А-95: —\n"
+        result += f"🔵 Дизель: {dizel[0].replace(',', '.')}" if dizel else "🔵 Дизель: —"
         return result
     except:
-        return "⛽ Данные недоступны"
+        return "⛽ Цены на топливо: данные недоступны"
 
 def get_fact():
     return random.choice(FACTS)
 
-# ------------------ ОТПРАВКА ------------------
+async def send_report(uid, scheduled=False):
+    if scheduled:
+        now = datetime.now()
+        key = f"{uid}_{now.strftime('%Y%m%d%H%M')}"
+        if key in last_sent:
+            return
+        last_sent[key] = True
 
-async def send_report(uid):
-    city = user_settings[str(uid)]["city"]
+    city = user_settings.get(uid, {}).get("city", "Edinet")
+    ukraine_event = get_ukraine_event()
     text = (
-        f"{get_day_info()}\n\n"
-        f"🌍 Город: {city}\n\n"
+        f"{get_day_info()}{ukraine_event}\n\n"
+        f"🌅 Здравствуйте! Ситуация в городе {city}:\n\n"
         f"{get_weather(city)}\n\n"
         f"{get_currency()}\n\n"
         f"{get_fuel()}\n\n"
@@ -150,123 +183,109 @@ async def send_report(uid):
     )
     await bot.send_message(uid, text)
 
-async def broadcast(text):
-    for uid in user_settings.keys():
-        try:
-            await bot.send_message(uid, text)
-        except:
-            pass
-
-# ------------------ ПЛАНИРОВЩИК ------------------
-
 def reschedule(uid):
     job_id = f"report_{uid}"
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
-
-    hour = user_settings[str(uid)]["hour"]
-    minute = user_settings[str(uid)]["minute"]
-
+    hour = user_settings.get(uid, {}).get("hour", 7)
+    minute = user_settings.get(uid, {}).get("minute", 0)
     scheduler.add_job(
-        send_report,
-        "cron",
-        hour=hour,
-        minute=minute,
-        args=[uid],
-        id=job_id,
+        send_report, "cron",
+        hour=hour, minute=minute,
+        args=[uid, True], id=job_id,
         replace_existing=True
     )
 
-# ------------------ КОМАНДЫ ------------------
-
 @dp.message(Command("start"))
 async def start(m: types.Message):
-    uid = str(m.from_user.id)
-
-    if uid not in user_settings:
-        user_settings[uid] = {
-            "city": "Edinet,MD",
-            "hour": 7,
-            "minute": 0,
-            "waiting": None
-        }
-        save_users()
-
+    uid = m.from_user.id
+    user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     reschedule(uid)
-
-    await m.answer("✅ Бот активирован!", reply_markup=get_keyboard(uid))
-
-@dp.message(F.text == "📊 Сводка сейчас")
-async def now(m: types.Message):
-    await send_report(str(m.from_user.id))
-
-@dp.message(F.text == "⚙️ Настройки")
-async def settings(m: types.Message):
-    uid = str(m.from_user.id)
-    s = user_settings[uid]
     await m.answer(
-        f"🏙 {s['city']}\n⏰ {s['hour']:02d}:{s['minute']:02d}",
-        reply_markup=get_keyboard(uid)
+        "✅ Бот активирован!\n\n"
+        "Каждый день в 7:00 буду присылать сводку.\n\n"
+        "Команды:\n"
+        "/now — сводка прямо сейчас\n"
+        "/setcity — сменить город\n"
+        "/settime — сменить время оповещения\n"
+        "/settings — текущие настройки"
     )
 
-@dp.message(F.text == "🏙 Сменить город")
-async def set_city(m: types.Message):
-    uid = str(m.from_user.id)
+@dp.message(Command("settings"))
+async def settings(m: types.Message):
+    uid = m.from_user.id
+    s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
+    await m.answer(
+        f"⚙️ Текущие настройки:\n"
+        f"🏙 Город: {s.get('city', 'Edinet')}\n"
+        f"⏰ Время: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}"
+    )
+
+@dp.message(Command("now"))
+async def now(m: types.Message):
+    uid = m.from_user.id
+    key = f"now_{uid}"
+    if key in last_sent:
+        diff = (datetime.now() - last_sent[key]).total_seconds()
+        if diff < 10:
+            return
+    last_sent[key] = datetime.now()
+    await send_report(uid, scheduled=False)
+
+@dp.message(Command("setcity"))
+async def setcity(m: types.Message):
+    uid = m.from_user.id
+    if uid not in user_settings:
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
     user_settings[uid]["waiting"] = "city"
-    save_users()
-    await m.answer("Введите город (пример: Chisinau,MD)")
+    await m.answer("🏙 Введите название города на английском (например: Chisinau, Balti, Bucuresti):")
 
-@dp.message(F.text == "⏰ Сменить время")
-async def set_time(m: types.Message):
-    uid = str(m.from_user.id)
+@dp.message(Command("settime"))
+async def settime(m: types.Message):
+    uid = m.from_user.id
+    if uid not in user_settings:
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
     user_settings[uid]["waiting"] = "time"
-    save_users()
-    await m.answer("Введите время 07:00")
-
-@dp.message(F.text == "👥 Статистика")
-async def stats_button(m: types.Message):
-    if m.from_user.id != ADMIN_ID:
-        return
-    await m.answer(f"👥 Всего пользователей: {len(user_settings)}")
-
-@dp.message(F.text == "📢 Рассылка")
-async def broadcast_button(m: types.Message):
-    if m.from_user.id != ADMIN_ID:
-        return
-    user_settings[str(m.from_user.id)]["waiting"] = "broadcast"
-    await m.answer("Введите текст для рассылки:")
+    await m.answer("⏰ Введите время в формате ЧЧ:ММ (например: 07:00 или 08:30):")
 
 @dp.message()
-async def handler(m: types.Message):
-    uid = str(m.from_user.id)
+async def handle_input(m: types.Message):
+    uid = m.from_user.id
     waiting = user_settings.get(uid, {}).get("waiting")
 
     if waiting == "city":
         user_settings[uid]["city"] = m.text
         user_settings[uid]["waiting"] = None
-        save_users()
-        await m.answer("✅ Город обновлён", reply_markup=get_keyboard(uid))
+        await m.answer(f"✅ Город изменён на: {m.text}")
 
     elif waiting == "time":
         try:
-            hour, minute = map(int, m.text.split(":"))
-            user_settings[uid]["hour"] = hour
-            user_settings[uid]["minute"] = minute
-            user_settings[uid]["waiting"] = None
-            save_users()
-            reschedule(uid)
-            await m.answer("✅ Время обновлено", reply_markup=get_keyboard(uid))
+            parts = m.text.strip().split(":")
+            hour = int(parts[0])
+            minute = int(parts[1])
+            if 0 <= hour <= 23 and 0 <= minute <= 59:
+                user_settings[uid]["hour"] = hour
+                user_settings[uid]["minute"] = minute
+                user_settings[uid]["waiting"] = None
+                reschedule(uid)
+                await m.answer(f"✅ Время изменено на: {hour:02d}:{minute:02d}\nЗавтра пришлю сводку в это время!")
+            else:
+                await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
         except:
-            await m.answer("❌ Неверный формат")
-
-    elif waiting == "broadcast" and m.from_user.id == ADMIN_ID:
-        await broadcast(m.text)
-        user_settings[uid]["waiting"] = None
-        await m.answer("✅ Рассылка отправлена", reply_markup=get_keyboard(uid))
+            await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+    else:
+        await m.answer(
+            "Команды:\n"
+            "/now — сводка прямо сейчас\n"
+            "/setcity — сменить город\n"
+            "/settime — сменить время\n"
+            "/settings — текущие настройки"
+        )
 
 async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
     scheduler.start()
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
     asyncio.run(main())
