@@ -1,4 +1,3 @@
 aiogram
-requests
 apscheduler
-pytz
+requests
