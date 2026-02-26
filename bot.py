@@ -34,8 +34,9 @@ def get_day_info():
     today = date.today()
     day_name = DAYS_RU[today.weekday()]
     date_str = today.strftime("%d.%m.%Y")
+    week_num = today.isocalendar()[1]
     holiday = HOLIDAYS.get((today.month, today.day), "")
-    result = f"📅 {day_name}, {date_str}"
+    result = f"📅 {day_name}, {date_str} | Неделя #{week_num}"
     if today.weekday() >= 5:
         result += " — 🎉 Выходной!"
     if holiday:
@@ -95,19 +96,16 @@ def get_currency():
 def get_fuel():
     try:
         r = requests.get(
-            "https://bemol.md/ru/prices",
+            "https://esp.md/ru/fuel-rates",
             timeout=10,
             headers={"User-Agent": "Mozilla/5.0"}
         )
         text = r.text
-        nums = re.findall(r'\d{2}[.,]\d{2}', text)
-        nums = [n.replace(',', '.') for n in nums]
+        benzin = re.findall(r'A-95[^0-9]*(\d{2}[.,]\d{2})', text)
+        dizel = re.findall(r'[Дд]изел[ьи][^0-9]*(\d{2}[.,]\d{2})', text)
         result = "⛽ Цены на топливо (MDL/л):\n"
-        if len(nums) >= 2:
-            result += f"🟡 Бензин А-95: {nums[0]}\n"
-            result += f"🔵 Дизель: {nums[1]}"
-        else:
-            result += "🟡 Бензин: —\n🔵 Дизель: —"
+        result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин А-95: —\n"
+        result += f"🔵 Дизель: {dizel[0].replace(',', '.')}" if dizel else "🔵 Дизель: —"
         return result
     except:
         return "⛽ Цены на топливо: данные недоступны"
