@@ -1,14 +1,13 @@
 import asyncio, requests, os, re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.client.default import DefaultBotProperties
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
 
-bot = Bot(token=TOKEN, default=DefaultBotProperties())
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 user_settings = {}
@@ -96,16 +95,19 @@ def get_currency():
 def get_fuel():
     try:
         r = requests.get(
-            "https://www.bnm.md/ro/content/preturile-la-produsele-petroliere",
+            "https://bemol.md/ru/prices",
             timeout=10,
             headers={"User-Agent": "Mozilla/5.0"}
         )
         text = r.text
-        benzin = re.findall(r'Benzin\s*A-95[^0-9]*([0-9]+[.,][0-9]+)', text)
-        motorina = re.findall(r'Motorin[^0-9]*([0-9]+[.,][0-9]+)', text)
+        nums = re.findall(r'\d{2}[.,]\d{2}', text)
+        nums = [n.replace(',', '.') for n in nums]
         result = "⛽ Цены на топливо (MDL/л):\n"
-        result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин: —\n"
-        result += f"🔵 Дизель: {motorina[0].replace(',', '.')}" if motorina else "🔵 Дизель: —"
+        if len(nums) >= 2:
+            result += f"🟡 Бензин А-95: {nums[0]}\n"
+            result += f"🔵 Дизель: {nums[1]}"
+        else:
+            result += "🟡 Бензин: —\n🔵 Дизель: —"
         return result
     except:
         return "⛽ Цены на топливо: данные недоступны"
