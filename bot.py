@@ -1,11 +1,20 @@
-import asyncio, requests, os, re, random
+import asyncio, requests, os, re, random, sys
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date, datetime
+import fcntl
 
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
+
+# Блокировка — только один процесс может работать
+lock_file = open("/tmp/bot.lock", "w")
+try:
+    fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print("Другой процесс уже запущен. Выход.")
+    sys.exit(0)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
