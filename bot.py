@@ -1,4 +1,4 @@
-import asyncio, requests, os, re, random, sys
+import asyncio, requests, os, re, random, sys, json
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -9,6 +9,7 @@ import fcntl
 TOKEN = os.environ.get("TOKEN")
 WEATHER_API = os.environ.get("WEATHER_API")
 ADMIN_ID = 5200690387
+USERS_FILE = "/tmp/users.json"
 
 lock_file = open("/tmp/bot.lock", "w")
 try:
@@ -22,6 +23,24 @@ dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 user_settings = {}
 last_sent = {}
+
+def save_users():
+    try:
+        data = {str(k): v for k, v in user_settings.items()}
+        with open(USERS_FILE, "w") as f:
+            json.dump(data, f)
+    except:
+        pass
+
+def load_users():
+    try:
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, "r") as f:
+                data = json.load(f)
+            for k, v in data.items():
+                user_settings[int(k)] = v
+    except:
+        pass
 
 HOLIDAYS = {
     (1, 1): "🎊 Новый год",
@@ -212,6 +231,7 @@ async def start(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
+        save_users()
     reschedule(uid)
     await m.answer(
         "✅ Бот активирован!\n\n"
@@ -263,9 +283,8 @@ async def btn_users(m: types.Message):
     if m.from_user.id != ADMIN_ID:
         return
     count = len(user_settings)
-    ids = "\n".join([f"• {uid}" for uid in user_settings.keys()])
     await m.answer(
-        f"👥 Всего пользователей: {count}\n\n{ids}",
+        f"👥 Всего пользователей: {count}",
         reply_markup=get_main_keyboard(m.from_user.id)
     )
 
@@ -294,12 +313,14 @@ async def handle_input(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
+        save_users()
     waiting = user_settings[uid].get("waiting")
 
     if waiting == "city":
         user_settings[uid]["city"] = m.text
         user_settings[uid]["waiting"] = None
         reschedule(uid)
+        save_users()
         await m.answer(f"✅ Город изменён на: {m.text}", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "time":
@@ -312,6 +333,7 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["minute"] = minute
                 user_settings[uid]["waiting"] = None
                 reschedule(uid)
+                save_users()
                 await m.answer(
                     f"✅ Время изменено на: {hour:02d}:{minute:02d}\nЗавтра пришлю сводку в это время!",
                     reply_markup=get_main_keyboard(uid)
@@ -342,6 +364,9 @@ async def handle_input(m: types.Message):
         await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard(uid))
 
 async def main():
+    load_users()
+    for uid in list(user_settings.keys()):
+        reschedule(uid)
     await bot.delete_webhook(drop_pending_updates=True)
     scheduler.start()
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
