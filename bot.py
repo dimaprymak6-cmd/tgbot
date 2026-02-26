@@ -1,6 +1,7 @@
 import asyncio, requests, os, re, random, sys
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date, datetime
 import fcntl
@@ -62,16 +63,26 @@ UKRAINE_EVENTS = {
     (3, 16): "🇺🇦 2014: Незаконный референдум в Крыму организован Россией.",
     (3, 18): "🇺🇦 2014: Россия аннексировала Крым.",
     (4, 26): "🇺🇦 1986: Катастрофа на Чернобыльской АЭС.",
-    (5, 9): "🇺🇦 1945: День победы над нацистской Германией во Второй мировой войне.",
+    (5, 9): "🇺🇦 1945: День победы над нацистской Германией.",
     (6, 28): "🇺🇦 1996: Принята Конституция Украины.",
     (8, 24): "🇺🇦 1991: Украина провозгласила независимость от СССР.",
-    (9, 29): "🇺🇦 1941: Массовое убийство евреев в Бабьем Яру под Киевом.",
+    (9, 29): "🇺🇦 1941: Массовое убийство в Бабьем Яру под Киевом.",
     (10, 14): "🇺🇦 День защитника Украины — национальный праздник.",
     (11, 21): "🇺🇦 2013: Начало революции Евромайдан в Киеве.",
     (11, 22): "🇺🇦 2004: Начало Оранжевой революции в Украине.",
     (12, 1): "🇺🇦 1991: Референдум подтвердил независимость Украины — 90% за.",
-    (12, 5): "🇺🇦 1994: Подписан Будапештский меморандум — Украина отказалась от ядерного оружия.",
+    (12, 5): "🇺🇦 1994: Подписан Будапештский меморандум.",
 }
+
+def get_main_keyboard():
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📊 Сводка сейчас"), KeyboardButton(text="⚙️ Настройки")],
+            [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")],
+        ],
+        resize_keyboard=True
+    )
+    return keyboard
 
 def get_day_info():
     today = date.today()
@@ -204,25 +215,12 @@ async def start(m: types.Message):
     await m.answer(
         "✅ Бот активирован!\n\n"
         "Каждый день в 7:00 буду присылать сводку.\n\n"
-        "Команды:\n"
-        "/now — сводка прямо сейчас\n"
-        "/setcity — сменить город\n"
-        "/settime — сменить время оповещения\n"
-        "/settings — текущие настройки"
+        "Используй кнопки внизу 👇",
+        reply_markup=get_main_keyboard()
     )
 
-@dp.message(Command("settings"))
-async def settings(m: types.Message):
-    uid = m.from_user.id
-    s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
-    await m.answer(
-        f"⚙️ Текущие настройки:\n"
-        f"🏙 Город: {s.get('city', 'Edinet')}\n"
-        f"⏰ Время: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}"
-    )
-
-@dp.message(Command("now"))
-async def now(m: types.Message):
+@dp.message(F.text == "📊 Сводка сейчас")
+async def btn_now(m: types.Message):
     uid = m.from_user.id
     key = f"now_{uid}"
     if key in last_sent:
@@ -232,21 +230,43 @@ async def now(m: types.Message):
     last_sent[key] = datetime.now()
     await send_report(uid, scheduled=False)
 
-@dp.message(Command("setcity"))
-async def setcity(m: types.Message):
+@dp.message(F.text == "⚙️ Настройки")
+async def btn_settings(m: types.Message):
+    uid = m.from_user.id
+    s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
+    await m.answer(
+        f"⚙️ Текущие настройки:\n"
+        f"🏙 Город: {s.get('city', 'Edinet')}\n"
+        f"⏰ Время: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}",
+        reply_markup=get_main_keyboard()
+    )
+
+@dp.message(F.text == "🏙 Сменить город")
+async def btn_setcity(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
     user_settings[uid]["waiting"] = "city"
     await m.answer("🏙 Введите название города на английском (например: Chisinau, Balti, Bucuresti):")
 
-@dp.message(Command("settime"))
-async def settime(m: types.Message):
+@dp.message(F.text == "⏰ Сменить время")
+async def btn_settime(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0}
     user_settings[uid]["waiting"] = "time"
     await m.answer("⏰ Введите время в формате ЧЧ:ММ (например: 07:00 или 08:30):")
+
+@dp.message(Command("now"))
+async def cmd_now(m: types.Message):
+    uid = m.from_user.id
+    key = f"now_{uid}"
+    if key in last_sent:
+        diff = (datetime.now() - last_sent[key]).total_seconds()
+        if diff < 10:
+            return
+    last_sent[key] = datetime.now()
+    await send_report(uid, scheduled=False)
 
 @dp.message()
 async def handle_input(m: types.Message):
@@ -256,7 +276,7 @@ async def handle_input(m: types.Message):
     if waiting == "city":
         user_settings[uid]["city"] = m.text
         user_settings[uid]["waiting"] = None
-        await m.answer(f"✅ Город изменён на: {m.text}")
+        await m.answer(f"✅ Город изменён на: {m.text}", reply_markup=get_main_keyboard())
 
     elif waiting == "time":
         try:
@@ -268,19 +288,16 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["minute"] = minute
                 user_settings[uid]["waiting"] = None
                 reschedule(uid)
-                await m.answer(f"✅ Время изменено на: {hour:02d}:{minute:02d}\nЗавтра пришлю сводку в это время!")
+                await m.answer(
+                    f"✅ Время изменено на: {hour:02d}:{minute:02d}\nЗавтра пришлю сводку в это время!",
+                    reply_markup=get_main_keyboard()
+                )
             else:
                 await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
         except:
             await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
     else:
-        await m.answer(
-            "Команды:\n"
-            "/now — сводка прямо сейчас\n"
-            "/setcity — сменить город\n"
-            "/settime — сменить время\n"
-            "/settings — текущие настройки"
-        )
+        await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard())
 
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
