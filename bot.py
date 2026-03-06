@@ -29,8 +29,8 @@ def save_users():
         data = {str(k): v for k, v in user_settings.items()}
         with open(USERS_FILE, "w") as f:
             json.dump(data, f)
-    except:
-        pass
+    except Exception as e:
+        print(f"Save error: {e}")
 
 def load_users():
     try:
@@ -39,8 +39,9 @@ def load_users():
                 data = json.load(f)
             for k, v in data.items():
                 user_settings[int(k)] = v
-    except:
-        pass
+            print(f"Загружено пользователей: {len(user_settings)}")
+    except Exception as e:
+        print(f"Load error: {e}")
 
 HOLIDAYS = {
     (1, 1): "🎊 Новый год",
@@ -91,11 +92,6 @@ ENGLISH_PHRASES = [
     ("Good morning!", "Доброе утро!"),
     ("Have a nice day!", "Хорошего дня!"),
     ("How are you?", "Как дела?"),
-    ("I'm fine, thank you.", "Я в порядке, спасибо."),
-    ("What's the weather like?", "Какая погода?"),
-    ("It's a beautiful day.", "Прекрасный день."),
-    ("See you tomorrow!", "До завтра!"),
-    ("Take care of yourself.", "Береги себя."),
     ("Everything will be fine.", "Всё будет хорошо."),
     ("Keep going, don't give up!", "Продолжай, не сдавайся!"),
     ("You can do it!", "Ты можешь это сделать!"),
@@ -113,23 +109,16 @@ ENGLISH_PHRASES = [
     ("Where there's a will, there's a way.", "Где есть желание, там есть путь."),
     ("Every cloud has a silver lining.", "Нет худа без добра."),
     ("Don't worry, be happy.", "Не переживай, будь счастлив."),
-    ("Home is where the heart is.", "Дом там, где сердце."),
     ("The early bird catches the worm.", "Кто рано встаёт, тому Бог подаёт."),
     ("No pain, no gain.", "Без труда не вытащишь рыбку из пруда."),
-    ("Look before you leap.", "Семь раз отмерь, один раз отрежь."),
     ("Two heads are better than one.", "Одна голова хорошо, а две лучше."),
     ("A friend in need is a friend indeed.", "Друг познаётся в беде."),
-    ("All that glitters is not gold.", "Не всё то золото, что блестит."),
-    ("Good things come to those who wait.", "Всё приходит к тому, кто умеет ждать."),
-    ("You reap what you sow.", "Что посеешь, то и пожнёшь."),
     ("Life is short, enjoy it.", "Жизнь коротка, наслаждайся ею."),
     ("Dream big, work hard.", "Мечтай смело, работай усердно."),
     ("Never stop learning.", "Никогда не переставай учиться."),
     ("Be kind to others.", "Будь добр к другим."),
     ("Smile and the world smiles with you.", "Улыбнись — и мир улыбнётся тебе."),
-    ("Think before you speak.", "Думай прежде, чем говорить."),
     ("Make the most of every day.", "Используй каждый день по максимуму."),
-    ("Small steps lead to big results.", "Маленькие шаги ведут к большим результатам."),
     ("It's never too late to start.", "Никогда не поздно начать."),
     ("Happiness is a choice.", "Счастье — это выбор."),
     ("Do what you love.", "Делай то, что любишь."),
@@ -142,52 +131,45 @@ QUOTES = [
     ("Стив Джобс", "Единственный способ делать великую работу — любить то, что делаешь."),
     ("Конфуций", "Не важно, как медленно ты идёшь, главное — не останавливаться."),
     ("Уинстон Черчилль", "Успех — это умение идти от одной неудачи к другой, не теряя энтузиазма."),
-    ("Лев Толстой", "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему."),
     ("Антон Чехов", "Краткость — сестра таланта."),
-    ("Мартин Лютер Кинг", "Если ты не можешь летать — беги. Если не можешь бежать — иди. Если не можешь идти — ползи. Но двигайся вперёд."),
+    ("Мартин Лютер Кинг", "Если ты не можешь летать — беги. Если не можешь бежать — иди. Но двигайся вперёд."),
     ("Сократ", "Я знаю, что ничего не знаю."),
-    ("Билл Гейтс", "Жизнь несправедлива — привыкайте к этому."),
-    ("Авраам Линкольн", "Дайте мне шесть часов, чтобы срубить дерево, и я потрачу первые четыре на заточку топора."),
     ("Марк Твен", "Секрет успеха в том, чтобы начать."),
     ("Оскар Уайльд", "Будь собой — все остальные роли уже заняты."),
     ("Фридрих Ницше", "Всё, что нас не убивает, делает нас сильнее."),
     ("Махатма Ганди", "Будь тем изменением, которое хочешь видеть в мире."),
-    ("Стивен Хокинг", "Жизнь была бы трагедией, если бы не была такой смешной."),
-    ("Альберт Эйнштейн", "Есть только два бесконечных явления: Вселенная и человеческая глупость."),
     ("Достоевский", "Красота спасёт мир."),
-    ("Булгаков", "Трусость — это самый страшный грех."),
     ("Черчилль", "Если вы идёте через ад — продолжайте идти."),
+    ("Билл Гейтс", "Жизнь несправедлива — привыкайте к этому."),
 ]
 
 JOKES = [
     "— Доктор, я буду жить?\n— А смысл?",
     "Оптимист учит английский. Пессимист учит китайский. Реалист учит автомат Калашникова.",
     "— Как ты себя чувствуешь?\n— Как понедельник в пятничном теле.",
-    "Я встаю в 6 утра, чтобы всё успеть. Успеваю лечь в 4 утра.",
-    "— Почему ты опоздал?\n— Будильник не зазвонил.\n— Почему?\n— Я его не заводил.\n— Почему?\n— Зачем заводить то, что не хочешь слышать?",
     "Мой мозг: надо спать. Я: ок. Мой мозг: а помнишь тот стыд из 2009 года?",
     "Диета — это когда смотришь на еду и говоришь: нет. Потом: ладно, немного. Потом: всё.",
     "Понедельник — это такой маленький год.",
-    "Человек, который улыбается когда всё идёт не так, уже придумал на кого свалить вину.",
     "— Папа, что такое WiFi?\n— Это невидимая штука, без которой жить невозможно. Как мама.",
-    "Я не толстый, просто у меня много запасных частей.",
     "Кофе — потому что злым людям нельзя давать оружие.",
     "— Ты спишь?\n— Нет, я считаю деньги которых у меня нет.",
-    "Жизнь как зебра: если сейчас чёрная полоса — скоро будет белая. Если белая — держись, скоро чёрная.",
+    "Жизнь как зебра: если сейчас чёрная полоса — скоро будет белая.",
     "— Сколько времени?\n— Уже поздно.\n— А точнее?\n— Надо было раньше думать.",
+    "Я не толстый, просто у меня много запасных частей.",
+    "— Почему ты опоздал?\n— Будильник не зазвонил.\n— Почему?\n— Я его не заводил.",
 ]
 
 RECIPES = [
-    ("🥘 Мамалыга", "Вскипятить воду с солью, постепенно всыпать кукурузную муку, варить 20 минут помешивая. Подавать с брынзой и сметаной."),
-    ("🥗 Зама", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной. Традиционный молдавский суп."),
+    ("🥘 Мамалыга", "Вскипятить воду с солью, всыпать кукурузную муку, варить 20 минут помешивая. Подавать с брынзой и сметаной."),
+    ("🥗 Зама", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной."),
     ("🍖 Мититеи", "Смешать фарш говядина+свинина, чеснок, тмин, соду. Сформировать колбаски и жарить на гриле."),
     ("🥧 Плацинда с брынзой", "Раскатать тесто, положить начинку из брынзы с укропом, сложить конвертом и жарить на масле."),
-    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, добавить морковь, заправить яйцом со сметаной и уксусом."),
-    ("🥩 Токана", "Обжарить лук, добавить мясо кусочками, тушить с помидорами и чесноком 1.5 часа. Подавать с мамалыгой."),
+    ("🥩 Токана", "Обжарить лук, добавить мясо кусочками, тушить с помидорами и чесноком 1.5 часа."),
     ("🍅 Гивеч", "Нарезать баклажаны, перец, помидоры, картофель. Запечь в духовке с чесноком и зеленью."),
-    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать сыром или яблоками с сахаром, свернуть рулетом и запечь."),
+    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать сыром, свернуть рулетом и запечь."),
     ("🍷 Глинтвейн по-молдавски", "Красное вино подогреть с корицей, гвоздикой, апельсиновой цедрой и мёдом. Не кипятить!"),
-    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук, морковь и томатную пасту."),
+    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук и томатную пасту."),
+    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, заправить яйцом со сметаной и уксусом."),
 ]
 
 DAILY_QUESTIONS = [
@@ -196,54 +178,40 @@ DAILY_QUESTIONS = [
     ("Кто написал 'Войну и мир'?", ["Достоевский", "Чехов", "Толстой", "Пушкин"], "Толстой"),
     ("Какая самая длинная река в мире?", ["Амазонка", "Нил", "Янцзы", "Миссисипи"], "Нил"),
     ("В каком году высадились на Луну?", ["1967", "1968", "1969", "1970"], "1969"),
-    ("Какая самая высокая гора?", ["К2", "Эверест", "Килиманджаро", "Монблан"], "Эверест"),
     ("Столица Молдовы?", ["Бельцы", "Тирасполь", "Кишинёв", "Единцы"], "Кишинёв"),
     ("Сколько континентов на Земле?", ["5", "6", "7", "8"], "7"),
-    ("Какой язык самый распространённый в мире?", ["Английский", "Китайский", "Испанский", "Хинди"], "Китайский"),
     ("Кто написал 'Гамлета'?", ["Байрон", "Шекспир", "Диккенс", "Твен"], "Шекспир"),
-    ("Какой металл самый лёгкий?", ["Железо", "Алюминий", "Литий", "Титан"], "Литий"),
     ("В каком году началась Вторая мировая война?", ["1937", "1938", "1939", "1940"], "1939"),
     ("Столица Франции?", ["Лион", "Марсель", "Париж", "Бордо"], "Париж"),
     ("Сколько букв в русском алфавите?", ["30", "32", "33", "35"], "33"),
     ("Какая самая большая страна в мире?", ["Китай", "США", "Канада", "Россия"], "Россия"),
+    ("Какой металл самый лёгкий?", ["Железо", "Алюминий", "Литий", "Титан"], "Литий"),
+    ("Какая самая высокая гора?", ["К2", "Эверест", "Килиманджаро", "Монблан"], "Эверест"),
+    ("Какой язык самый распространённый в мире?", ["Английский", "Китайский", "Испанский", "Хинди"], "Китайский"),
 ]
 
 UKRAINE_EVENTS = {
     (1, 1): "🇺🇦 В этот день в 2016 году Украина перешла на безвизовый режим с Грузией.",
-    (1, 9): "🇺🇦 В этот день в 1990 году в Киеве прошёл первый Съезд Руха.",
     (1, 22): "🇺🇦 В этот день в 1918 году провозглашена независимость Украинской Народной Республики.",
-    (1, 28): "🇺🇦 В этот день в 1992 году Украина приняла государственный флаг — сине-жёлтый.",
-    (2, 2): "🇺🇦 В этот день в 1918 году Центральная Рада подписала мир с Германией.",
-    (2, 9): "🇺🇦 В этот день в 1918 году УНР подписала мирный договор в Брест-Литовске.",
-    (2, 16): "🇺🇦 В этот день в 1992 году введена украинская валюта — купон-карбованец.",
-    (2, 20): "🇺🇦 В этот день в 2014 году — самый кровавый день Майдана, погибли более 50 человек.",
+    (2, 20): "🇺🇦 В этот день в 2014 году — самый кровавый день Майдана.",
     (2, 22): "🇺🇦 В этот день в 2014 году Янукович бежал из Украины.",
     (2, 24): "🇺🇦 В этот день в 2022 году Россия начала полномасштабное вторжение в Украину.",
     (2, 26): "🇺🇦 В этот день в 2022 году украинские силы остановили колонну войск под Киевом.",
-    (2, 28): "🇺🇦 В этот день в 2022 году начались первые переговоры Украины и России на белорусской границе.",
+    (2, 28): "🇺🇦 В этот день в 2022 году начались первые переговоры Украины и России.",
     (3, 4): "🇺🇦 В этот день в 2022 году российские войска захватили Запорожскую АЭС.",
     (3, 9): "🇺🇦 В этот день в 1814 году родился Тарас Шевченко — великий украинский поэт.",
     (3, 16): "🇺🇦 В этот день в 2014 году прошёл незаконный референдум в Крыму.",
     (3, 18): "🇺🇦 В этот день в 2014 году Россия аннексировала Крым.",
-    (3, 20): "🇺🇦 В этот день в 2022 году разрушен Драматический театр в Мариуполе.",
     (4, 5): "🇺🇦 В этот день в 2022 году стало известно о массовых убийствах мирных жителей в Буче.",
     (4, 26): "🇺🇦 В этот день в 1986 году произошла катастрофа на Чернобыльской АЭС.",
-    (5, 2): "🇺🇦 В этот день в 2014 году трагедия в Одессе — столкновения унесли 48 жизней.",
     (5, 9): "🇺🇦 В этот день в 1945 году — победа над нацистской Германией.",
     (5, 16): "🇺🇦 В этот день в 2022 году защитники Азовстали сложили оружие после 82 дней обороны.",
     (5, 18): "🇺🇦 В этот день в 1944 году началась депортация крымских татар Сталиным.",
-    (6, 1): "🇺🇦 В этот день в 2022 году Украина получила статус кандидата на вступление в ЕС.",
     (6, 28): "🇺🇦 В этот день в 1996 году принята Конституция Украины.",
-    (7, 8): "🇺🇦 В этот день в 2022 году ракетный удар по Виннице унёс жизни 27 мирных жителей.",
     (7, 16): "🇺🇦 В этот день в 1990 году Верховная Рада приняла Декларацию о суверенитете.",
     (8, 24): "🇺🇦 В этот день в 1991 году Украина провозгласила независимость от СССР.",
-    (8, 29): "🇺🇦 В этот день в 2022 году началось контрнаступление Украины на Херсонском направлении.",
-    (9, 1): "🇺🇦 В этот день в 1939 году Германия напала на Польшу — начало Второй мировой войны.",
-    (9, 6): "🇺🇦 В этот день в 2022 году началось Харьковское контрнаступление Украины.",
-    (9, 11): "🇺🇦 В этот день в 2022 году Украина освободила Изюм от российских войск.",
     (9, 29): "🇺🇦 В этот день в 1941 году массовое убийство в Бабьем Яру — более 33 000 жертв.",
     (10, 8): "🇺🇦 В этот день в 2022 году взрыв на Керченском мосту — ключевая победа Украины.",
-    (10, 10): "🇺🇦 В этот день в 2022 году Россия нанесла массированный ракетный удар по городам Украины.",
     (10, 14): "🇺🇦 День защитника Украины — национальный праздник.",
     (10, 28): "🇺🇦 В этот день в 1944 году вся территория Украины освобождена от нацистов.",
     (11, 11): "🇺🇦 В этот день в 2022 году Украина освободила Херсон от российской оккупации.",
@@ -252,7 +220,6 @@ UKRAINE_EVENTS = {
     (11, 28): "🇺🇦 День памяти жертв Голодомора — геноцида украинского народа в 1932-1933 годах.",
     (12, 1): "🇺🇦 В этот день в 1991 году референдум подтвердил независимость Украины — 90% за.",
     (12, 5): "🇺🇦 В этот день в 1994 году подписан Будапештский меморандум.",
-    (12, 19): "🇺🇦 В этот день в 1991 году Украина вступила в СНГ.",
     (12, 25): "🇺🇦 В этот день в 1991 году СССР официально прекратил существование.",
 }
 
@@ -262,7 +229,7 @@ def get_main_keyboard(uid=0):
         [KeyboardButton(text="🌤 Погода"), KeyboardButton(text="💱 Курс валют")],
         [KeyboardButton(text="⛽ Топливо"), KeyboardButton(text="❓ Вопрос дня")],
         [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")],
-        [KeyboardButton(text="⏰ Напоминание")],
+        [KeyboardButton(text="🔔 Напоминание")],
     ]
     if uid == ADMIN_ID:
         buttons.append([KeyboardButton(text="📣 Рассылка"), KeyboardButton(text="👥 Пользователи")])
@@ -285,9 +252,7 @@ def get_day_info():
 def get_ukraine_event():
     today = date.today()
     event = UKRAINE_EVENTS.get((today.month, today.day), "")
-    if event:
-        return f"\n{event}"
-    return ""
+    return f"\n{event}" if event else ""
 
 def get_war_counter():
     start = date(2022, 2, 24)
@@ -295,36 +260,30 @@ def get_war_counter():
     return f"⚔️ День войны в Украине: #{days}"
 
 def get_english_phrase():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(ENGLISH_PHRASES)
+    idx = date.today().timetuple().tm_yday % len(ENGLISH_PHRASES)
     phrase, translation = ENGLISH_PHRASES[idx]
     return f"🇬🇧 *Фраза дня:*\n_{phrase}_\n🔤 {translation}"
 
 def get_quote():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(QUOTES)
+    idx = date.today().timetuple().tm_yday % len(QUOTES)
     author, quote = QUOTES[idx]
     return f"💬 *Цитата дня:*\n_{quote}_\n— {author}"
 
 def get_joke():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(JOKES)
+    idx = date.today().timetuple().tm_yday % len(JOKES)
     return f"😄 *Анекдот дня:*\n{JOKES[idx]}"
 
 def get_recipe():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(RECIPES)
+    idx = date.today().timetuple().tm_yday % len(RECIPES)
     name, recipe = RECIPES[idx]
     return f"🍽 *Рецепт дня — {name}:*\n{recipe}"
 
 def get_fact():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(FACTS)
+    idx = date.today().timetuple().tm_yday % len(FACTS)
     return f"💡 {FACTS[idx]}"
 
 def get_daily_question():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(DAILY_QUESTIONS)
+    idx = date.today().timetuple().tm_yday % len(DAILY_QUESTIONS)
     question, options, answer = DAILY_QUESTIONS[idx]
     opts = "\n".join([f"{i+1}. {o}" for i, o in enumerate(options)])
     return f"❓ *Вопрос дня:*\n{question}\n\n{opts}\n\n||Ответ: {answer}||"
@@ -382,11 +341,7 @@ def get_bitcoin():
         ).json()
         btc = r['bitcoin']['usd']
         eth = r['ethereum']['usd']
-        return (
-            f"₿ *Крипто курс (USD):*\n"
-            f"🟡 Bitcoin: ${btc:,.0f}\n"
-            f"🔷 Ethereum: ${eth:,.0f}"
-        )
+        return f"₿ *Крипто (USD):*\n🟡 Bitcoin: ${btc:,.0f}\n🔷 Ethereum: ${eth:,.0f}"
     except:
         return "₿ Крипто: данные недоступны"
 
@@ -409,19 +364,13 @@ def get_currency():
             except:
                 return "—"
 
-        usd = extract("USD")
-        eur = extract("EUR")
-        ron = extract("RON")
-        uah = extract("UAH")
-        gbp = extract("GBP")
-
         return (
             f"💱 *Курс валют (покупка / продажа MDL):*\n"
-            f"🇺🇸 Доллар США:      {usd}\n"
-            f"🇪🇺 Евро:               {eur}\n"
-            f"🇷🇴 Лей румынский:  {ron}\n"
-            f"🇺🇦 Гривна:            {uah}\n"
-            f"🇬🇧 Фунт стерл.:     {gbp}"
+            f"🇺🇸 Доллар США:      {extract('USD')}\n"
+            f"🇪🇺 Евро:               {extract('EUR')}\n"
+            f"🇷🇴 Лей румынский:  {extract('RON')}\n"
+            f"🇺🇦 Гривна:            {extract('UAH')}\n"
+            f"🇬🇧 Фунт стерл.:     {extract('GBP')}"
         )
     except:
         return "❌ Ошибка курса валют"
@@ -444,24 +393,62 @@ def get_fuel():
         return "⛽ Цены на топливо: данные недоступны"
 
 def get_moldova_news():
+    # Пробуем несколько источников
+    sources = [
+        ("https://point.md/ru/", [
+            r'<a[^>]+href="/ru/novosti/[^"]*"[^>]*>\s*([^<]{25,120})\s*</a>',
+            r'class="[^"]*article[^"]*title[^"]*"[^>]*>\s*([^<]{25,120})',
+        ]),
+        ("https://locals.md/", [
+            r'<h\d[^>]*>\s*<a[^>]*>([^<]{25,120})</a>',
+            r'entry-title[^>]*>\s*<a[^>]*>([^<]{25,120})</a>',
+        ]),
+    ]
+
+    for url, patterns in sources:
+        try:
+            r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            text = r.text
+            for pattern in patterns:
+                headlines = re.findall(pattern, text)
+                if headlines:
+                    seen = set()
+                    result = "📰 *Новости Молдовы:*\n"
+                    count = 0
+                    for h in headlines:
+                        h = h.strip()
+                        if h and h not in seen and len(h) > 25:
+                            seen.add(h)
+                            result += f"• {h}\n"
+                            count += 1
+                        if count >= 4:
+                            break
+                    if count >= 2:
+                        return result.strip()
+        except Exception as e:
+            print(f"News error {url}: {e}")
+            continue
+
+    # Если все источники недоступны — используем RSS
     try:
         r = requests.get(
-            "https://noi.md/ru/",
+            "https://feeds.feedburner.com/noi-md-ru",
             timeout=10,
             headers={"User-Agent": "Mozilla/5.0"}
         )
-        text = r.text
-        headlines = re.findall(r'<h\d[^>]*class="[^"]*title[^"]*"[^>]*>\s*<a[^>]*>([^<]+)</a>', text)
-        if not headlines:
-            headlines = re.findall(r'<a[^>]*class="[^"]*title[^"]*"[^>]*>([^<]{20,100})</a>', text)
-        if headlines:
+        titles = re.findall(r'<title><!\[CDATA\[([^\]]{20,120})\]\]></title>', r.text)
+        if not titles:
+            titles = re.findall(r'<title>([^<]{20,120})</title>', r.text)
+        titles = [t for t in titles if 'noi.md' not in t.lower() and 'новости' not in t.lower()[:10]]
+        if titles:
             result = "📰 *Новости Молдовы:*\n"
-            for h in headlines[:4]:
-                result += f"• {h.strip()}\n"
+            for t in titles[:4]:
+                result += f"• {t.strip()}\n"
             return result.strip()
-        return "📰 Новости: данные недоступны"
-    except:
-        return "📰 Новости: данные недоступны"
+    except Exception as e:
+        print(f"RSS error: {e}")
+
+    return "📰 Новости: данные недоступны"
 
 async def send_evening_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
@@ -505,17 +492,20 @@ async def send_report(uid, scheduled=False):
     await bot.send_message(uid, text, parse_mode="Markdown")
 
 def reschedule(uid):
+    s = user_settings.get(uid, {})
+    hour = s.get("hour", 7)
+    minute = s.get("minute", 0)
+
     job_id = f"report_{uid}"
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
-    hour = user_settings.get(uid, {}).get("hour", 7)
-    minute = user_settings.get(uid, {}).get("minute", 0)
     scheduler.add_job(
         send_report, "cron",
         hour=hour, minute=minute,
         args=[uid, True], id=job_id,
         replace_existing=True
     )
+
     evening_job_id = f"evening_{uid}"
     if scheduler.get_job(evening_job_id):
         scheduler.remove_job(evening_job_id)
@@ -526,17 +516,22 @@ def reschedule(uid):
         replace_existing=True
     )
 
-def schedule_reminder(uid, hour, minute, text):
-    job_id = f"reminder_{uid}"
-    if scheduler.get_job(job_id):
-        scheduler.remove_job(job_id)
-    async def send_reminder():
-        await bot.send_message(uid, f"⏰ Напоминание:\n\n{text}")
-    scheduler.add_job(
-        send_reminder, "cron",
-        hour=hour, minute=minute,
-        id=job_id, replace_existing=True
-    )
+    rem_hour = s.get("reminder_hour")
+    rem_minute = s.get("reminder_minute")
+    rem_text = s.get("reminder_text")
+    if rem_hour is not None and rem_text:
+        rem_job_id = f"reminder_{uid}"
+        if scheduler.get_job(rem_job_id):
+            scheduler.remove_job(rem_job_id)
+
+        async def make_reminder(u=uid, t=rem_text):
+            await bot.send_message(u, f"🔔 Напоминание:\n\n{t}")
+
+        scheduler.add_job(
+            make_reminder, "cron",
+            hour=rem_hour, minute=rem_minute,
+            id=rem_job_id, replace_existing=True
+        )
 
 @dp.message(Command("start"))
 async def start(m: types.Message):
@@ -568,14 +563,12 @@ async def btn_now(m: types.Message):
 async def btn_weather(m: types.Message):
     uid = m.from_user.id
     city = user_settings.get(uid, {}).get("city", "Edinet")
-    text = f"{get_weather(city)}\n\n{get_forecast(city)}"
-    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    await m.answer(f"{get_weather(city)}\n\n{get_forecast(city)}", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "💱 Курс валют")
 async def btn_currency(m: types.Message):
     uid = m.from_user.id
-    text = f"{get_currency()}\n\n{get_bitcoin()}"
-    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    await m.answer(f"{get_currency()}\n\n{get_bitcoin()}", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⛽ Топливо")
 async def btn_fuel(m: types.Message):
@@ -591,11 +584,14 @@ async def btn_question(m: types.Message):
 async def btn_settings(m: types.Message):
     uid = m.from_user.id
     s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
+    rem = ""
+    if s.get("reminder_hour") is not None:
+        rem = f"\n🔔 Напоминание: {s.get('reminder_hour', 0):02d}:{s.get('reminder_minute', 0):02d} — {s.get('reminder_text', '')}"
     await m.answer(
         f"⚙️ Текущие настройки:\n"
         f"🏙 Город: {s.get('city', 'Edinet')}\n"
         f"⏰ Утренняя сводка: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}\n"
-        f"🌙 Вечерняя сводка: 20:00",
+        f"🌙 Вечерняя сводка: 20:00{rem}",
         reply_markup=get_main_keyboard(uid)
     )
 
@@ -613,15 +609,15 @@ async def btn_settime(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "time"
-    await m.answer("⏰ Введите время утренней сводки в формате ЧЧ:ММ (например: 07:00 или 08:30):")
+    await m.answer("⏰ Введите время утренней сводки в формате ЧЧ:ММ (например: 07:00):")
 
-@dp.message(F.text == "⏰ Напоминание")
+@dp.message(F.text == "🔔 Напоминание")
 async def btn_reminder(m: types.Message):
     uid = m.from_user.id
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "reminder_time"
-    await m.answer("⏰ Введите время напоминания в формате ЧЧ:ММ (например: 09:00):")
+    await m.answer("🔔 Введите время напоминания в формате ЧЧ:ММ (например: 09:00):")
 
 @dp.message(F.text == "👥 Пользователи")
 async def btn_users(m: types.Message):
@@ -656,14 +652,15 @@ async def handle_input(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
         save_users()
+
     waiting = user_settings[uid].get("waiting")
 
     if waiting == "city":
-        user_settings[uid]["city"] = m.text
+        user_settings[uid]["city"] = m.text.strip()
         user_settings[uid]["waiting"] = None
         reschedule(uid)
         save_users()
-        await m.answer(f"✅ Город изменён на: {m.text}", reply_markup=get_main_keyboard(uid))
+        await m.answer(f"✅ Город изменён на: {m.text.strip()}", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "time":
         try:
@@ -677,7 +674,7 @@ async def handle_input(m: types.Message):
                 reschedule(uid)
                 save_users()
                 await m.answer(
-                    f"✅ Время изменено на: {hour:02d}:{minute:02d}",
+                    f"✅ Утренняя сводка изменена на: {hour:02d}:{minute:02d}",
                     reply_markup=get_main_keyboard(uid)
                 )
             else:
@@ -694,6 +691,7 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["reminder_hour"] = hour
                 user_settings[uid]["reminder_minute"] = minute
                 user_settings[uid]["waiting"] = "reminder_text"
+                save_users()
                 await m.answer(f"✅ Время {hour:02d}:{minute:02d} установлено!\nТеперь введите текст напоминания:")
             else:
                 await m.answer("❌ Неверный формат! Введите как 09:00")
@@ -701,13 +699,14 @@ async def handle_input(m: types.Message):
             await m.answer("❌ Неверный формат! Введите как 09:00")
 
     elif waiting == "reminder_text":
+        user_settings[uid]["reminder_text"] = m.text.strip()
+        user_settings[uid]["waiting"] = None
+        reschedule(uid)
+        save_users()
         rh = user_settings[uid].get("reminder_hour", 9)
         rm = user_settings[uid].get("reminder_minute", 0)
-        user_settings[uid]["waiting"] = None
-        save_users()
-        schedule_reminder(uid, rh, rm, m.text)
         await m.answer(
-            f"✅ Напоминание установлено на {rh:02d}:{rm:02d}\nТекст: {m.text}",
+            f"✅ Напоминание установлено на {rh:02d}:{rm:02d}\nТекст: {m.text.strip()}",
             reply_markup=get_main_keyboard(uid)
         )
 
