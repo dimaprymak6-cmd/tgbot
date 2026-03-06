@@ -120,11 +120,8 @@ ENGLISH_PHRASES = [
     ("Two heads are better than one.", "Одна голова хорошо, а две лучше."),
     ("A friend in need is a friend indeed.", "Друг познаётся в беде."),
     ("All that glitters is not gold.", "Не всё то золото, что блестит."),
-    ("The more, the merrier.", "Чем больше, тем веселее."),
-    ("It takes two to tango.", "Для танго нужны двое."),
     ("Good things come to those who wait.", "Всё приходит к тому, кто умеет ждать."),
     ("You reap what you sow.", "Что посеешь, то и пожнёшь."),
-    ("The pen is mightier than the sword.", "Перо сильнее меча."),
     ("Life is short, enjoy it.", "Жизнь коротка, наслаждайся ею."),
     ("Dream big, work hard.", "Мечтай смело, работай усердно."),
     ("Never stop learning.", "Никогда не переставай учиться."),
@@ -133,11 +130,64 @@ ENGLISH_PHRASES = [
     ("Think before you speak.", "Думай прежде, чем говорить."),
     ("Make the most of every day.", "Используй каждый день по максимуму."),
     ("Small steps lead to big results.", "Маленькие шаги ведут к большим результатам."),
-    ("Be the change you want to see.", "Будь тем изменением, которое хочешь видеть."),
     ("It's never too late to start.", "Никогда не поздно начать."),
     ("Happiness is a choice.", "Счастье — это выбор."),
     ("Do what you love.", "Делай то, что любишь."),
     ("Success is a journey, not a destination.", "Успех — это путь, а не пункт назначения."),
+]
+
+QUOTES = [
+    ("Наполеон Бонапарт", "Невозможное — это слово из словаря глупцов."),
+    ("Альберт Эйнштейн", "Воображение важнее знания."),
+    ("Стив Джобс", "Единственный способ делать великую работу — любить то, что делаешь."),
+    ("Конфуций", "Не важно, как медленно ты идёшь, главное — не останавливаться."),
+    ("Уинстон Черчилль", "Успех — это умение идти от одной неудачи к другой, не теряя энтузиазма."),
+    ("Лев Толстой", "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему."),
+    ("Антон Чехов", "Краткость — сестра таланта."),
+    ("Мартин Лютер Кинг", "Если ты не можешь летать — беги. Если не можешь бежать — иди. Если не можешь идти — ползи. Но двигайся вперёд."),
+    ("Сократ", "Я знаю, что ничего не знаю."),
+    ("Билл Гейтс", "Жизнь несправедлива — привыкайте к этому."),
+    ("Авраам Линкольн", "Дайте мне шесть часов, чтобы срубить дерево, и я потрачу первые четыре на заточку топора."),
+    ("Марк Твен", "Секрет успеха в том, чтобы начать."),
+    ("Оскар Уайльд", "Будь собой — все остальные роли уже заняты."),
+    ("Фридрих Ницше", "Всё, что нас не убивает, делает нас сильнее."),
+    ("Махатма Ганди", "Будь тем изменением, которое хочешь видеть в мире."),
+    ("Стивен Хокинг", "Жизнь была бы трагедией, если бы не была такой смешной."),
+    ("Эйнштейн", "Есть только два бесконечных явления: Вселенная и человеческая глупость."),
+    ("Достоевский", "Красота спасёт мир."),
+    ("Пушкин", "Я помню чудное мгновенье — передо мной явилась ты."),
+    ("Булгаков", "Трусость — это самый страшный грех."),
+]
+
+JOKES = [
+    "— Доктор, я буду жить?\n— А смысл?",
+    "Оптимист учит английский. Пессимист учит китайский. Реалист учит автомат Калашникова.",
+    "— Как ты себя чувствуешь?\n— Как понедельник в пятничном теле.",
+    "Я встаю в 6 утра, чтобы всё успеть. Успеваю лечь в 4 утра.",
+    "— Почему ты опоздал?\n— Будильник не зазвонил.\n— Почему?\n— Я его не заводил.\n— Почему?\n— Зачем заводить то, что не хочешь слышать?",
+    "Мой мозг: надо спать. Я: ок. Мой мозг: а помнишь тот стыд из 2009 года?",
+    "Диета — это когда смотришь на еду и говоришь: нет. Потом: ладно, немного. Потом: всё.",
+    "— Как дела?\n— Как у всех.\n— У всех по-разному.\n— Вот именно.",
+    "Понедельник — это такой маленький год.",
+    "Человек, который улыбается когда всё идёт не так, уже придумал на кого свалить вину.",
+    "— Папа, что такое WiFi?\n— Это невидимая штука, без которой жить невозможно. Как мама.",
+    "Я не толстый, просто у меня много запасных частей.",
+    "Кофе — потому что злым людям нельзя давать оружие.",
+    "— Ты спишь?\n— Нет, я считаю деньги которых у меня нет.",
+    "Жизнь как зебра: если сейчас чёрная полоса — скоро будет белая. Если белая — держись, скоро чёрная.",
+]
+
+RECIPES = [
+    ("🥘 Мамалыга", "Вскипятить воду с солью, постепенно всыпать кукурузную муку, варить 20 минут помешивая. Подавать с брынзой и сметаной."),
+    ("🥗 Зама (молдавский суп)", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной. Традиционный молдавский суп."),
+    ("🍖 Мититеи", "Смешать фарш (говядина+свинина), чеснок, тмин, соду. Сформировать колбаски и жарить на гриле."),
+    ("🥧 Плацинда с брынзой", "Раскатать тесто, положить начинку из брынзы с укропом, сложить конвертом и жарить на масле."),
+    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, добавить морковь, корень петрушки, заправить яйцом со сметаной и уксусом."),
+    ("🥩 Токана", "Обжарить лук, добавить мясо кусочками, тушить с помидорами и чесноком 1.5 часа. Подавать с мамалыгой."),
+    ("🍅 Гивеч", "Нарезать баклажаны, перец, помидоры, картофель. Запечь в духовке с чесноком и зеленью."),
+    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать тёртым сыром или яблоками с сахаром, свернуть рулетом и запечь."),
+    ("🍷 Глинтвейн по-молдавски", "Красное вино подогреть с корицей, гвоздикой, апельсиновой цедрой и мёдом. Не кипятить!"),
+    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук, морковь, лавровый лист и томатную пасту."),
 ]
 
 UKRAINE_EVENTS = {
@@ -217,11 +267,38 @@ def get_ukraine_event():
         return f"\n{event}"
     return ""
 
+def get_war_counter():
+    start = date(2022, 2, 24)
+    days = (date.today() - start).days
+    return f"⚔️ День войны в Украине: #{days}"
+
 def get_english_phrase():
     today = date.today()
     idx = today.timetuple().tm_yday % len(ENGLISH_PHRASES)
     phrase, translation = ENGLISH_PHRASES[idx]
-    return f"🇬🇧 Фраза дня:\n_{phrase}_\n🔤 {translation}"
+    return f"🇬🇧 *Фраза дня:*\n_{phrase}_\n🔤 {translation}"
+
+def get_quote():
+    today = date.today()
+    idx = today.timetuple().tm_yday % len(QUOTES)
+    author, quote = QUOTES[idx]
+    return f"💬 *Цитата дня:*\n_{quote}_\n— {author}"
+
+def get_joke():
+    today = date.today()
+    idx = today.timetuple().tm_yday % len(JOKES)
+    return f"😄 *Анекдот дня:*\n{JOKES[idx]}"
+
+def get_recipe():
+    today = date.today()
+    idx = today.timetuple().tm_yday % len(RECIPES)
+    name, recipe = RECIPES[idx]
+    return f"🍽 *Рецепт дня — {name}:*\n{recipe}"
+
+def get_fact():
+    today = date.today()
+    idx = today.timetuple().tm_yday % len(FACTS)
+    return f"💡 {FACTS[idx]}"
 
 def get_weather(city):
     try:
@@ -236,6 +313,46 @@ def get_weather(city):
         return f"🌤 Погода: {desc}\n🌡 {temp}°C (ощущается {feels}°C)\n💧 Влажность: {humidity}%"
     except:
         return "❌ Ошибка погоды"
+
+def get_forecast(city):
+    try:
+        r = requests.get(
+            "http://api.openweathermap.org/data/2.5/forecast",
+            params={"q": city, "appid": WEATHER_API, "units": "metric", "lang": "ru", "cnt": 24}
+        ).json()
+        seen = set()
+        result = "📅 *Прогноз на 3 дня:*\n"
+        for item in r['list']:
+            day = item['dt_txt'][:10]
+            if day not in seen and day != str(date.today()):
+                seen.add(day)
+                d = datetime.strptime(day, "%Y-%m-%d")
+                day_name = DAYS_RU[d.weekday()]
+                temp = item['main']['temp']
+                desc = item['weather'][0]['description']
+                result += f"• {day_name} {d.strftime('%d.%m')}: {temp}°C, {desc}\n"
+            if len(seen) >= 3:
+                break
+        return result.strip()
+    except:
+        return "❌ Ошибка прогноза"
+
+def get_bitcoin():
+    try:
+        r = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price",
+            params={"ids": "bitcoin,ethereum,tether", "vs_currencies": "usd"},
+            timeout=10
+        ).json()
+        btc = r['bitcoin']['usd']
+        eth = r['ethereum']['usd']
+        return (
+            f"₿ *Крипто курс (USD):*\n"
+            f"🟡 Bitcoin: ${btc:,.0f}\n"
+            f"🔷 Ethereum: ${eth:,.0f}"
+        )
+    except:
+        return "₿ Крипто: данные недоступны"
 
 def get_currency():
     try:
@@ -290,11 +407,6 @@ def get_fuel():
     except:
         return "⛽ Цены на топливо: данные недоступны"
 
-def get_fact():
-    today = date.today()
-    idx = today.timetuple().tm_yday % len(FACTS)
-    return f"💡 {FACTS[idx]}"
-
 async def send_report(uid, scheduled=False):
     if scheduled:
         now = datetime.now()
@@ -306,13 +418,19 @@ async def send_report(uid, scheduled=False):
     city = user_settings.get(uid, {}).get("city", "Edinet")
     ukraine_event = get_ukraine_event()
     text = (
-        f"{get_day_info()}{ukraine_event}\n\n"
+        f"{get_day_info()}{ukraine_event}\n"
+        f"{get_war_counter()}\n\n"
         f"🌅 Здравствуйте! Ситуация в городе {city}:\n\n"
         f"{get_weather(city)}\n\n"
+        f"{get_forecast(city)}\n\n"
         f"{get_currency()}\n\n"
+        f"{get_bitcoin()}\n\n"
         f"{get_fuel()}\n\n"
         f"{get_fact()}\n\n"
-        f"{get_english_phrase()}"
+        f"{get_english_phrase()}\n\n"
+        f"{get_quote()}\n\n"
+        f"{get_joke()}\n\n"
+        f"{get_recipe()}"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
 
