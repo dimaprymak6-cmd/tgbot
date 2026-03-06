@@ -153,10 +153,10 @@ QUOTES = [
     ("Фридрих Ницше", "Всё, что нас не убивает, делает нас сильнее."),
     ("Махатма Ганди", "Будь тем изменением, которое хочешь видеть в мире."),
     ("Стивен Хокинг", "Жизнь была бы трагедией, если бы не была такой смешной."),
-    ("Эйнштейн", "Есть только два бесконечных явления: Вселенная и человеческая глупость."),
+    ("Альберт Эйнштейн", "Есть только два бесконечных явления: Вселенная и человеческая глупость."),
     ("Достоевский", "Красота спасёт мир."),
-    ("Пушкин", "Я помню чудное мгновенье — передо мной явилась ты."),
     ("Булгаков", "Трусость — это самый страшный грех."),
+    ("Черчилль", "Если вы идёте через ад — продолжайте идти."),
 ]
 
 JOKES = [
@@ -167,7 +167,6 @@ JOKES = [
     "— Почему ты опоздал?\n— Будильник не зазвонил.\n— Почему?\n— Я его не заводил.\n— Почему?\n— Зачем заводить то, что не хочешь слышать?",
     "Мой мозг: надо спать. Я: ок. Мой мозг: а помнишь тот стыд из 2009 года?",
     "Диета — это когда смотришь на еду и говоришь: нет. Потом: ладно, немного. Потом: всё.",
-    "— Как дела?\n— Как у всех.\n— У всех по-разному.\n— Вот именно.",
     "Понедельник — это такой маленький год.",
     "Человек, который улыбается когда всё идёт не так, уже придумал на кого свалить вину.",
     "— Папа, что такое WiFi?\n— Это невидимая штука, без которой жить невозможно. Как мама.",
@@ -175,19 +174,38 @@ JOKES = [
     "Кофе — потому что злым людям нельзя давать оружие.",
     "— Ты спишь?\n— Нет, я считаю деньги которых у меня нет.",
     "Жизнь как зебра: если сейчас чёрная полоса — скоро будет белая. Если белая — держись, скоро чёрная.",
+    "— Сколько времени?\n— Уже поздно.\n— А точнее?\n— Надо было раньше думать.",
 ]
 
 RECIPES = [
     ("🥘 Мамалыга", "Вскипятить воду с солью, постепенно всыпать кукурузную муку, варить 20 минут помешивая. Подавать с брынзой и сметаной."),
-    ("🥗 Зама (молдавский суп)", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной. Традиционный молдавский суп."),
-    ("🍖 Мититеи", "Смешать фарш (говядина+свинина), чеснок, тмин, соду. Сформировать колбаски и жарить на гриле."),
+    ("🥗 Зама", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной. Традиционный молдавский суп."),
+    ("🍖 Мититеи", "Смешать фарш говядина+свинина, чеснок, тмин, соду. Сформировать колбаски и жарить на гриле."),
     ("🥧 Плацинда с брынзой", "Раскатать тесто, положить начинку из брынзы с укропом, сложить конвертом и жарить на масле."),
-    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, добавить морковь, корень петрушки, заправить яйцом со сметаной и уксусом."),
+    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, добавить морковь, заправить яйцом со сметаной и уксусом."),
     ("🥩 Токана", "Обжарить лук, добавить мясо кусочками, тушить с помидорами и чесноком 1.5 часа. Подавать с мамалыгой."),
     ("🍅 Гивеч", "Нарезать баклажаны, перец, помидоры, картофель. Запечь в духовке с чесноком и зеленью."),
-    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать тёртым сыром или яблоками с сахаром, свернуть рулетом и запечь."),
+    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать сыром или яблоками с сахаром, свернуть рулетом и запечь."),
     ("🍷 Глинтвейн по-молдавски", "Красное вино подогреть с корицей, гвоздикой, апельсиновой цедрой и мёдом. Не кипятить!"),
-    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук, морковь, лавровый лист и томатную пасту."),
+    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук, морковь и томатную пасту."),
+]
+
+DAILY_QUESTIONS = [
+    ("Какая столица Австралии?", ["Сидней", "Мельбурн", "Канберра", "Брисбен"], "Канберра"),
+    ("Сколько планет в Солнечной системе?", ["7", "8", "9", "10"], "8"),
+    ("Кто написал 'Войну и мир'?", ["Достоевский", "Чехов", "Толстой", "Пушкин"], "Толстой"),
+    ("Какая самая длинная река в мире?", ["Амазонка", "Нил", "Янцзы", "Миссисипи"], "Нил"),
+    ("В каком году высадились на Луну?", ["1967", "1968", "1969", "1970"], "1969"),
+    ("Какая самая высокая гора?", ["К2", "Эверест", "Килиманджаро", "Монблан"], "Эверест"),
+    ("Столица Молдовы?", ["Бельцы", "Тирасполь", "Кишинёв", "Единцы"], "Кишинёв"),
+    ("Сколько континентов на Земле?", ["5", "6", "7", "8"], "7"),
+    ("Какой язык самый распространённый в мире?", ["Английский", "Китайский", "Испанский", "Хинди"], "Китайский"),
+    ("Кто написал 'Гамлета'?", ["Байрон", "Шекспир", "Диккенс", "Твен"], "Шекспир"),
+    ("Какой металл самый лёгкий?", ["Железо", "Алюминий", "Литий", "Титан"], "Литий"),
+    ("В каком году началась Вторая мировая война?", ["1937", "1938", "1939", "1940"], "1939"),
+    ("Столица Франции?", ["Лион", "Марсель", "Париж", "Бордо"], "Париж"),
+    ("Сколько букв в русском алфавите?", ["30", "32", "33", "35"], "33"),
+    ("Какая самая большая страна в мире?", ["Китай", "США", "Канада", "Россия"], "Россия"),
 ]
 
 UKRAINE_EVENTS = {
@@ -241,7 +259,10 @@ UKRAINE_EVENTS = {
 def get_main_keyboard(uid=0):
     buttons = [
         [KeyboardButton(text="📊 Сводка сейчас"), KeyboardButton(text="⚙️ Настройки")],
+        [KeyboardButton(text="🌤 Погода"), KeyboardButton(text="💱 Курс валют")],
+        [KeyboardButton(text="⛽ Топливо"), KeyboardButton(text="❓ Вопрос дня")],
         [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")],
+        [KeyboardButton(text="⏰ Напоминание")],
     ]
     if uid == ADMIN_ID:
         buttons.append([KeyboardButton(text="📣 Рассылка"), KeyboardButton(text="👥 Пользователи")])
@@ -252,8 +273,9 @@ def get_day_info():
     day_name = DAYS_RU[today.weekday()]
     date_str = today.strftime("%d.%m.%Y")
     week_num = today.isocalendar()[1]
+    day_of_year = today.timetuple().tm_yday
     holiday = HOLIDAYS.get((today.month, today.day), "")
-    result = f"📅 {day_name}, {date_str} | Неделя #{week_num}"
+    result = f"📅 {day_name}, {date_str} | Неделя #{week_num} | День #{day_of_year}"
     if today.weekday() >= 5:
         result += " — 🎉 Выходной!"
     if holiday:
@@ -300,6 +322,13 @@ def get_fact():
     idx = today.timetuple().tm_yday % len(FACTS)
     return f"💡 {FACTS[idx]}"
 
+def get_daily_question():
+    today = date.today()
+    idx = today.timetuple().tm_yday % len(DAILY_QUESTIONS)
+    question, options, answer = DAILY_QUESTIONS[idx]
+    opts = "\n".join([f"{i+1}. {o}" for i, o in enumerate(options)])
+    return f"❓ *Вопрос дня:*\n{question}\n\n{opts}\n\n||Ответ: {answer}||"
+
 def get_weather(city):
     try:
         r = requests.get(
@@ -310,7 +339,14 @@ def get_weather(city):
         temp = r['main']['temp']
         feels = r['main']['feels_like']
         humidity = r['main']['humidity']
-        return f"🌤 Погода: {desc}\n🌡 {temp}°C (ощущается {feels}°C)\n💧 Влажность: {humidity}%"
+        wind = r['wind']['speed']
+        return (
+            f"🌤 *Погода в {city}:*\n"
+            f"🌡 {temp}°C (ощущается {feels}°C)\n"
+            f"☁️ {desc}\n"
+            f"💧 Влажность: {humidity}%\n"
+            f"💨 Ветер: {wind} м/с"
+        )
     except:
         return "❌ Ошибка погоды"
 
@@ -341,7 +377,7 @@ def get_bitcoin():
     try:
         r = requests.get(
             "https://api.coingecko.com/api/v3/simple/price",
-            params={"ids": "bitcoin,ethereum,tether", "vs_currencies": "usd"},
+            params={"ids": "bitcoin,ethereum", "vs_currencies": "usd"},
             timeout=10
         ).json()
         btc = r['bitcoin']['usd']
@@ -380,7 +416,7 @@ def get_currency():
         gbp = extract("GBP")
 
         return (
-            f"💱 Курс валют (покупка / продажа MDL):\n"
+            f"💱 *Курс валют (покупка / продажа MDL):*\n"
             f"🇺🇸 Доллар США:      {usd}\n"
             f"🇪🇺 Евро:               {eur}\n"
             f"🇷🇴 Лей румынский:  {ron}\n"
@@ -400,12 +436,44 @@ def get_fuel():
         text = r.text
         benzin = re.findall(r'(?:бензин|A-95|А-95)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
         dizel = re.findall(r'(?:дизел|motorin)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        result = "⛽ Цены на топливо (MDL/л):\n"
+        result = "⛽ *Цены на топливо (MDL/л):*\n"
         result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин А-95: —\n"
         result += f"🔵 Дизель: {dizel[0].replace(',', '.')}" if dizel else "🔵 Дизель: —"
         return result
     except:
         return "⛽ Цены на топливо: данные недоступны"
+
+def get_moldova_news():
+    try:
+        r = requests.get(
+            "https://noi.md/ru/",
+            timeout=10,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        text = r.text
+        headlines = re.findall(r'<h\d[^>]*class="[^"]*title[^"]*"[^>]*>\s*<a[^>]*>([^<]+)</a>', text)
+        if not headlines:
+            headlines = re.findall(r'<a[^>]*class="[^"]*title[^"]*"[^>]*>([^<]{20,100})</a>', text)
+        if headlines:
+            result = "📰 *Новости Молдовы:*\n"
+            for h in headlines[:4]:
+                result += f"• {h.strip()}\n"
+            return result.strip()
+        return "📰 Новости: данные недоступны"
+    except:
+        return "📰 Новости: данные недоступны"
+
+async def send_evening_report(uid):
+    city = user_settings.get(uid, {}).get("city", "Edinet")
+    text = (
+        f"🌙 *Вечерняя сводка — {city}*\n\n"
+        f"{get_weather(city)}\n\n"
+        f"{get_currency()}\n\n"
+        f"{get_fuel()}\n\n"
+        f"{get_bitcoin()}\n\n"
+        f"Хорошего вечера! 😊"
+    )
+    await bot.send_message(uid, text, parse_mode="Markdown")
 
 async def send_report(uid, scheduled=False):
     if scheduled:
@@ -426,11 +494,13 @@ async def send_report(uid, scheduled=False):
         f"{get_currency()}\n\n"
         f"{get_bitcoin()}\n\n"
         f"{get_fuel()}\n\n"
+        f"{get_moldova_news()}\n\n"
         f"{get_fact()}\n\n"
         f"{get_english_phrase()}\n\n"
         f"{get_quote()}\n\n"
         f"{get_joke()}\n\n"
-        f"{get_recipe()}"
+        f"{get_recipe()}\n\n"
+        f"{get_daily_question()}"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
 
@@ -446,6 +516,27 @@ def reschedule(uid):
         args=[uid, True], id=job_id,
         replace_existing=True
     )
+    evening_job_id = f"evening_{uid}"
+    if scheduler.get_job(evening_job_id):
+        scheduler.remove_job(evening_job_id)
+    scheduler.add_job(
+        send_evening_report, "cron",
+        hour=20, minute=0,
+        args=[uid], id=evening_job_id,
+        replace_existing=True
+    )
+
+def schedule_reminder(uid, hour, minute, text):
+    job_id = f"reminder_{uid}"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+    async def send_reminder():
+        await bot.send_message(uid, f"⏰ Напоминание:\n\n{text}")
+    scheduler.add_job(
+        send_reminder, "cron",
+        hour=hour, minute=minute,
+        id=job_id, replace_existing=True
+    )
 
 @dp.message(Command("start"))
 async def start(m: types.Message):
@@ -456,7 +547,8 @@ async def start(m: types.Message):
     reschedule(uid)
     await m.answer(
         "✅ Бот активирован!\n\n"
-        "Каждый день в 7:00 буду присылать сводку.\n\n"
+        "Каждый день в 7:00 — утренняя сводка.\n"
+        "Каждый день в 20:00 — вечерняя сводка.\n\n"
         "Используй кнопки внизу 👇",
         reply_markup=get_main_keyboard(uid)
     )
@@ -472,6 +564,29 @@ async def btn_now(m: types.Message):
     last_sent[key] = datetime.now()
     await send_report(uid, scheduled=False)
 
+@dp.message(F.text == "🌤 Погода")
+async def btn_weather(m: types.Message):
+    uid = m.from_user.id
+    city = user_settings.get(uid, {}).get("city", "Edinet")
+    text = f"{get_weather(city)}\n\n{get_forecast(city)}"
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+
+@dp.message(F.text == "💱 Курс валют")
+async def btn_currency(m: types.Message):
+    uid = m.from_user.id
+    text = f"{get_currency()}\n\n{get_bitcoin()}"
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+
+@dp.message(F.text == "⛽ Топливо")
+async def btn_fuel(m: types.Message):
+    uid = m.from_user.id
+    await m.answer(get_fuel(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+
+@dp.message(F.text == "❓ Вопрос дня")
+async def btn_question(m: types.Message):
+    uid = m.from_user.id
+    await m.answer(get_daily_question(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+
 @dp.message(F.text == "⚙️ Настройки")
 async def btn_settings(m: types.Message):
     uid = m.from_user.id
@@ -479,7 +594,8 @@ async def btn_settings(m: types.Message):
     await m.answer(
         f"⚙️ Текущие настройки:\n"
         f"🏙 Город: {s.get('city', 'Edinet')}\n"
-        f"⏰ Время: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}",
+        f"⏰ Утренняя сводка: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}\n"
+        f"🌙 Вечерняя сводка: 20:00",
         reply_markup=get_main_keyboard(uid)
     )
 
@@ -497,17 +613,22 @@ async def btn_settime(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "time"
-    await m.answer("⏰ Введите время в формате ЧЧ:ММ (например: 07:00 или 08:30):")
+    await m.answer("⏰ Введите время утренней сводки в формате ЧЧ:ММ (например: 07:00 или 08:30):")
+
+@dp.message(F.text == "⏰ Напоминание")
+async def btn_reminder(m: types.Message):
+    uid = m.from_user.id
+    if uid not in user_settings:
+        user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
+    user_settings[uid]["waiting"] = "reminder_time"
+    await m.answer("⏰ Введите время напоминания в формате ЧЧ:ММ (например: 09:00):")
 
 @dp.message(F.text == "👥 Пользователи")
 async def btn_users(m: types.Message):
     if m.from_user.id != ADMIN_ID:
         return
     count = len(user_settings)
-    await m.answer(
-        f"👥 Всего пользователей: {count}",
-        reply_markup=get_main_keyboard(m.from_user.id)
-    )
+    await m.answer(f"👥 Всего пользователей: {count}", reply_markup=get_main_keyboard(m.from_user.id))
 
 @dp.message(F.text == "📣 Рассылка")
 async def btn_broadcast(m: types.Message):
@@ -556,13 +677,39 @@ async def handle_input(m: types.Message):
                 reschedule(uid)
                 save_users()
                 await m.answer(
-                    f"✅ Время изменено на: {hour:02d}:{minute:02d}\nЗавтра пришлю сводку в это время!",
+                    f"✅ Время изменено на: {hour:02d}:{minute:02d}",
                     reply_markup=get_main_keyboard(uid)
                 )
             else:
                 await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
         except:
             await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+
+    elif waiting == "reminder_time":
+        try:
+            parts = m.text.strip().split(":")
+            hour = int(parts[0])
+            minute = int(parts[1])
+            if 0 <= hour <= 23 and 0 <= minute <= 59:
+                user_settings[uid]["reminder_hour"] = hour
+                user_settings[uid]["reminder_minute"] = minute
+                user_settings[uid]["waiting"] = "reminder_text"
+                await m.answer(f"✅ Время {hour:02d}:{minute:02d} установлено!\nТеперь введите текст напоминания:")
+            else:
+                await m.answer("❌ Неверный формат! Введите как 09:00")
+        except:
+            await m.answer("❌ Неверный формат! Введите как 09:00")
+
+    elif waiting == "reminder_text":
+        rh = user_settings[uid].get("reminder_hour", 9)
+        rm = user_settings[uid].get("reminder_minute", 0)
+        user_settings[uid]["waiting"] = None
+        save_users()
+        schedule_reminder(uid, rh, rm, m.text)
+        await m.answer(
+            f"✅ Напоминание установлено на {rh:02d}:{rm:02d}\nТекст: {m.text}",
+            reply_markup=get_main_keyboard(uid)
+        )
 
     elif waiting == "broadcast":
         if uid != ADMIN_ID:
