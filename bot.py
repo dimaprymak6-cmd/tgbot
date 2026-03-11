@@ -88,108 +88,6 @@ FACTS = [
     "В Молдове более 600 000 гектаров сельскохозяйственных угодий.",
 ]
 
-ENGLISH_PHRASES = [
-    ("Good morning!", "Доброе утро!"),
-    ("Have a nice day!", "Хорошего дня!"),
-    ("How are you?", "Как дела?"),
-    ("Everything will be fine.", "Всё будет хорошо."),
-    ("Keep going, don't give up!", "Продолжай, не сдавайся!"),
-    ("You can do it!", "Ты можешь это сделать!"),
-    ("Step by step.", "Шаг за шагом."),
-    ("Every day is a new chance.", "Каждый день — новый шанс."),
-    ("Stay positive!", "Оставайся позитивным!"),
-    ("Hard work pays off.", "Упорный труд окупается."),
-    ("Believe in yourself.", "Верь в себя."),
-    ("Actions speak louder than words.", "Дела говорят громче слов."),
-    ("Time is money.", "Время — деньги."),
-    ("Better late than never.", "Лучше поздно, чем никогда."),
-    ("Live and learn.", "Живи и учись."),
-    ("Practice makes perfect.", "Практика делает мастера."),
-    ("Knowledge is power.", "Знание — сила."),
-    ("Where there's a will, there's a way.", "Где есть желание, там есть путь."),
-    ("Every cloud has a silver lining.", "Нет худа без добра."),
-    ("Don't worry, be happy.", "Не переживай, будь счастлив."),
-    ("The early bird catches the worm.", "Кто рано встаёт, тому Бог подаёт."),
-    ("No pain, no gain.", "Без труда не вытащишь рыбку из пруда."),
-    ("Two heads are better than one.", "Одна голова хорошо, а две лучше."),
-    ("A friend in need is a friend indeed.", "Друг познаётся в беде."),
-    ("Life is short, enjoy it.", "Жизнь коротка, наслаждайся ею."),
-    ("Dream big, work hard.", "Мечтай смело, работай усердно."),
-    ("Never stop learning.", "Никогда не переставай учиться."),
-    ("Be kind to others.", "Будь добр к другим."),
-    ("Smile and the world smiles with you.", "Улыбнись — и мир улыбнётся тебе."),
-    ("Make the most of every day.", "Используй каждый день по максимуму."),
-    ("It's never too late to start.", "Никогда не поздно начать."),
-    ("Happiness is a choice.", "Счастье — это выбор."),
-    ("Do what you love.", "Делай то, что любишь."),
-    ("Success is a journey, not a destination.", "Успех — это путь, а не пункт назначения."),
-]
-
-QUOTES = [
-    ("Наполеон Бонапарт", "Невозможное — это слово из словаря глупцов."),
-    ("Альберт Эйнштейн", "Воображение важнее знания."),
-    ("Стив Джобс", "Единственный способ делать великую работу — любить то, что делаешь."),
-    ("Конфуций", "Не важно, как медленно ты идёшь, главное — не останавливаться."),
-    ("Уинстон Черчилль", "Успех — это умение идти от одной неудачи к другой, не теряя энтузиазма."),
-    ("Антон Чехов", "Краткость — сестра таланта."),
-    ("Мартин Лютер Кинг", "Если ты не можешь летать — беги. Если не можешь бежать — иди. Но двигайся вперёд."),
-    ("Сократ", "Я знаю, что ничего не знаю."),
-    ("Марк Твен", "Секрет успеха в том, чтобы начать."),
-    ("Оскар Уайльд", "Будь собой — все остальные роли уже заняты."),
-    ("Фридрих Ницше", "Всё, что нас не убивает, делает нас сильнее."),
-    ("Махатма Ганди", "Будь тем изменением, которое хочешь видеть в мире."),
-    ("Достоевский", "Красота спасёт мир."),
-    ("Черчилль", "Если вы идёте через ад — продолжайте идти."),
-    ("Билл Гейтс", "Жизнь несправедлива — привыкайте к этому."),
-]
-
-JOKES = [
-    "— Доктор, я буду жить?\n— А смысл?",
-    "Оптимист учит английский. Пессимист учит китайский. Реалист учит автомат Калашникова.",
-    "— Как ты себя чувствуешь?\n— Как понедельник в пятничном теле.",
-    "Мой мозг: надо спать. Я: ок. Мой мозг: а помнишь тот стыд из 2009 года?",
-    "Диета — это когда смотришь на еду и говоришь: нет. Потом: ладно, немного. Потом: всё.",
-    "Понедельник — это такой маленький год.",
-    "— Папа, что такое WiFi?\n— Это невидимая штука, без которой жить невозможно. Как мама.",
-    "Кофе — потому что злым людям нельзя давать оружие.",
-    "— Ты спишь?\n— Нет, я считаю деньги которых у меня нет.",
-    "Жизнь как зебра: если сейчас чёрная полоса — скоро будет белая.",
-    "— Сколько времени?\n— Уже поздно.\n— А точнее?\n— Надо было раньше думать.",
-    "Я не толстый, просто у меня много запасных частей.",
-    "— Почему ты опоздал?\n— Будильник не зазвонил.\n— Почему?\n— Я его не заводил.",
-]
-
-RECIPES = [
-    ("🥘 Мамалыга", "Вскипятить воду с солью, всыпать кукурузную муку, варить 20 минут помешивая. Подавать с брынзой и сметаной."),
-    ("🥗 Зама", "Сварить курицу, добавить овощи, заправить яйцом с лимонным соком и сметаной."),
-    ("🍖 Мититеи", "Смешать фарш говядина+свинина, чеснок, тмин, соду. Сформировать колбаски и жарить на гриле."),
-    ("🥧 Плацинда с брынзой", "Раскатать тесто, положить начинку из брынзы с укропом, сложить конвертом и жарить на масле."),
-    ("🥩 Токана", "Обжарить лук, добавить мясо кусочками, тушить с помидорами и чесноком 1.5 часа."),
-    ("🍅 Гивеч", "Нарезать баклажаны, перец, помидоры, картофель. Запечь в духовке с чесноком и зеленью."),
-    ("🥐 Вертута", "Раскатать тонкое тесто, смазать маслом, посыпать сыром, свернуть рулетом и запечь."),
-    ("🍷 Глинтвейн по-молдавски", "Красное вино подогреть с корицей, гвоздикой, апельсиновой цедрой и мёдом. Не кипятить!"),
-    ("🫕 Фасоле ку чиолан", "Фасоль замочить на ночь, варить с копчёной рулькой, добавить лук и томатную пасту."),
-    ("🍲 Чорба де бурта", "Говяжий рубец отварить до мягкости, заправить яйцом со сметаной и уксусом."),
-]
-
-DAILY_QUESTIONS = [
-    ("Какая столица Австралии?", ["Сидней", "Мельбурн", "Канберра", "Брисбен"], "Канберра"),
-    ("Сколько планет в Солнечной системе?", ["7", "8", "9", "10"], "8"),
-    ("Кто написал 'Войну и мир'?", ["Достоевский", "Чехов", "Толстой", "Пушкин"], "Толстой"),
-    ("Какая самая длинная река в мире?", ["Амазонка", "Нил", "Янцзы", "Миссисипи"], "Нил"),
-    ("В каком году высадились на Луну?", ["1967", "1968", "1969", "1970"], "1969"),
-    ("Столица Молдовы?", ["Бельцы", "Тирасполь", "Кишинёв", "Единцы"], "Кишинёв"),
-    ("Сколько континентов на Земле?", ["5", "6", "7", "8"], "7"),
-    ("Кто написал 'Гамлета'?", ["Байрон", "Шекспир", "Диккенс", "Твен"], "Шекспир"),
-    ("В каком году началась Вторая мировая война?", ["1937", "1938", "1939", "1940"], "1939"),
-    ("Столица Франции?", ["Лион", "Марсель", "Париж", "Бордо"], "Париж"),
-    ("Сколько букв в русском алфавите?", ["30", "32", "33", "35"], "33"),
-    ("Какая самая большая страна в мире?", ["Китай", "США", "Канада", "Россия"], "Россия"),
-    ("Какой металл самый лёгкий?", ["Железо", "Алюминий", "Литий", "Титан"], "Литий"),
-    ("Какая самая высокая гора?", ["К2", "Эверест", "Килиманджаро", "Монблан"], "Эверест"),
-    ("Какой язык самый распространённый в мире?", ["Английский", "Китайский", "Испанский", "Хинди"], "Китайский"),
-]
-
 UKRAINE_EVENTS = {
     (1, 1): "🇺🇦 В этот день в 2016 году Украина перешла на безвизовый режим с Грузией.",
     (1, 22): "🇺🇦 В этот день в 1918 году провозглашена независимость Украинской Народной Республики.",
@@ -227,7 +125,7 @@ def get_main_keyboard(uid=0):
     buttons = [
         [KeyboardButton(text="📊 Сводка сейчас"), KeyboardButton(text="⚙️ Настройки")],
         [KeyboardButton(text="🌤 Погода"), KeyboardButton(text="💱 Курс валют")],
-        [KeyboardButton(text="⛽ Топливо"), KeyboardButton(text="❓ Вопрос дня")],
+        [KeyboardButton(text="⛽ Топливо"), KeyboardButton(text="📰 Новости")],
         [KeyboardButton(text="🏙 Сменить город"), KeyboardButton(text="⏰ Сменить время")],
         [KeyboardButton(text="🔔 Напоминание")],
     ]
@@ -259,34 +157,9 @@ def get_war_counter():
     days = (date.today() - start).days
     return f"⚔️ День войны в Украине: #{days}"
 
-def get_english_phrase():
-    idx = date.today().timetuple().tm_yday % len(ENGLISH_PHRASES)
-    phrase, translation = ENGLISH_PHRASES[idx]
-    return f"🇬🇧 *Фраза дня:*\n_{phrase}_\n🔤 {translation}"
-
-def get_quote():
-    idx = date.today().timetuple().tm_yday % len(QUOTES)
-    author, quote = QUOTES[idx]
-    return f"💬 *Цитата дня:*\n_{quote}_\n— {author}"
-
-def get_joke():
-    idx = date.today().timetuple().tm_yday % len(JOKES)
-    return f"😄 *Анекдот дня:*\n{JOKES[idx]}"
-
-def get_recipe():
-    idx = date.today().timetuple().tm_yday % len(RECIPES)
-    name, recipe = RECIPES[idx]
-    return f"🍽 *Рецепт дня — {name}:*\n{recipe}"
-
 def get_fact():
     idx = date.today().timetuple().tm_yday % len(FACTS)
     return f"💡 {FACTS[idx]}"
-
-def get_daily_question():
-    idx = date.today().timetuple().tm_yday % len(DAILY_QUESTIONS)
-    question, options, answer = DAILY_QUESTIONS[idx]
-    opts = "\n".join([f"{i+1}. {o}" for i, o in enumerate(options)])
-    return f"❓ *Вопрос дня:*\n{question}\n\n{opts}\n\n||Ответ: {answer}||"
 
 def get_weather(city):
     try:
@@ -377,67 +250,76 @@ def get_currency():
 
 def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    benzin = None
-    dizel = None
 
-    # Источник 1: locals.md
+    # === Источник 1: esp.md/ru/fuel-rates — цены по всем заправкам ===
     try:
-        r = requests.get("https://locals.md/", timeout=10, headers=headers)
+        r = requests.get("https://esp.md/ru/fuel-rates", timeout=10, headers=headers)
         text = r.text
-        b = re.findall(r'(?:benzin|бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        if b: benzin = b[0].replace(',', '.')
-        if d: dizel = d[0].replace(',', '.')
+
+        # Ищем блоки по заправкам: Bemol, Petrom, Vento, Rompetrol
+        stations = {}
+        # Паттерн: название заправки, потом A-95 цена, DS цена, GAZ цена
+        blocks = re.findall(
+            r'(Bemol|Petrom|Vento|Rompetrol|Lukoil|Sheriff|Pemo)[^·]*·\s*A-95\s*·\s*([\d.]+)\s*MDL\s*·\s*DS\s*·\s*([\d.]+)\s*MDL(?:\s*·\s*GAZ\s*·\s*([\d.]+)\s*MDL)?',
+            text, re.IGNORECASE
+        )
+        if blocks:
+            result = "⛽ *Цены на топливо (MDL/л):*\n\n"
+            for b in blocks[:5]:
+                name, a95, ds, gaz = b
+                line = f"🏪 *{name}:* А-95: {a95} | Дизель: {ds}"
+                if gaz:
+                    line += f" | Газ: {gaz}"
+                result += line + "\n"
+            return result.strip()
     except Exception as e:
-        print(f"Fuel locals.md error: {e}")
+        print(f"Fuel esp.md error: {e}")
 
-    # Источник 2: point.md
-    if not benzin or not dizel:
-        try:
-            r = requests.get("https://point.md/ru/novosti/story/tsena-na-toplivo/", timeout=10, headers=headers)
-            text = r.text
-            b = re.findall(r'(?:бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-            d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-            if b and not benzin: benzin = b[0].replace(',', '.')
-            if d and not dizel: dizel = d[0].replace(',', '.')
-        except Exception as e:
-            print(f"Fuel point.md error: {e}")
+    # === Источник 2: noi.md — официальные цены НАРЭ ===
+    try:
+        r = requests.get("https://noi.md/ru/themes/ceny-na-toplivo", timeout=10, headers=headers)
+        text = r.text
+        # Ищем цены в тексте новостей
+        b95 = re.findall(r'(?:бензин[а]?\s*(?:COR\s*)?(?:A-?95)[^\d]*|A-?95[^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        ds = re.findall(r'(?:дизел[ьяе][^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b95 or ds:
+            result = "⛽ *Цены на топливо НАРЭ (MDL/л):*\n"
+            result += f"🟡 Бензин А-95: {b95[0].replace(',', '.')}\n" if b95 else "🟡 Бензин А-95: —\n"
+            result += f"🔵 Дизель: {ds[0].replace(',', '.')}" if ds else "🔵 Дизель: —"
+            return result
+    except Exception as e:
+        print(f"Fuel noi.md error: {e}")
 
-    # Источник 3: newsmaker.md — ищем упоминание цен в новостях
-    if not benzin or not dizel:
-        try:
-            r = requests.get("https://newsmaker.md/ru/category/news", timeout=10, headers=headers)
-            text = r.text
-            b = re.findall(r'(?:бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-            d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-            if b and not benzin: benzin = b[0].replace(',', '.')
-            if d and not dizel: dizel = d[0].replace(',', '.')
-        except Exception as e:
-            print(f"Fuel newsmaker error: {e}")
+    # === Источник 3: newsmaker.md — последняя статья о ценах ===
+    try:
+        r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
+        text = r.text
+        b95 = re.findall(r'(?:бензин[^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        ds = re.findall(r'(?:дизел[ьяе][^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b95 or ds:
+            result = "⛽ *Цены на топливо (MDL/л):*\n"
+            result += f"🟡 Бензин А-95: {b95[0].replace(',', '.')}\n" if b95 else "🟡 Бензин А-95: —\n"
+            result += f"🔵 Дизель: {ds[0].replace(',', '.')}" if ds else "🔵 Дизель: —"
+            return result
+    except Exception as e:
+        print(f"Fuel newsmaker error: {e}")
 
-    result = "⛽ *Цены на топливо (MDL/л):*\n"
-    result += f"🟡 Бензин А-95: {benzin}\n" if benzin else "🟡 Бензин А-95: —\n"
-    result += f"🔵 Дизель: {dizel}" if dizel else "🔵 Дизель: —"
-    return result
+    return "⛽ Цены на топливо: данные недоступны"
 
 def get_moldova_news():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    # Источник 1: newsmaker.md/ru — русскоязычный, хорошая структура
+    # Источник 1: newsmaker.md
     try:
         r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
         text = r.text
-        # Ищем заголовки статей
         headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]+href="https://newsmaker\.md/ru/[^"]*"[^>]*>([^<]{20,150})</a>', text)
         if not headlines:
-            headlines = re.findall(r'"articleName"[^:]*:\s*"([^"]{20,150})"', text)
-        if not headlines:
-            headlines = re.findall(r'<a[^>]+href="https://newsmaker\.md/ru/[^"]*"[^>]*>\s*([^<]{20,150})\s*</a>', text)
-
-        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+            headlines = re.findall(r'<a[^>]+href="https://newsmaker\.md/ru/[^"#"]*"[^>]*>\s*([^<]{25,150})\s*</a>', text)
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
         if len(headlines) >= 2:
-            result = "📰 *Новости Молдовы (NewsМaker):*\n"
             seen = set()
+            result = "📰 *Новости Молдовы:*\n"
             count = 0
             for h in headlines:
                 if h not in seen:
@@ -451,18 +333,15 @@ def get_moldova_news():
     except Exception as e:
         print(f"News newsmaker error: {e}")
 
-    # Источник 2: locals.md
+    # Источник 2: esp.md
     try:
-        r = requests.get("https://locals.md/", timeout=10, headers=headers)
+        r = requests.get("https://esp.md/ru/sobytiya", timeout=10, headers=headers)
         text = r.text
-        headlines = re.findall(r'<h\d[^>]*class="[^"]*"[^>]*>\s*<a[^>]*>([^<]{20,150})</a>', text)
-        if not headlines:
-            headlines = re.findall(r'class="entry-title[^"]*"[^>]*>\s*<a[^>]*>([^<]{20,150})</a>', text)
-
-        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+        headlines = re.findall(r'<a[^>]+href="/ru/sobytiya/[^"]*"[^>]*>\s*([^<]{25,150})\s*</a>', text)
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
         if len(headlines) >= 2:
-            result = "📰 *Новости Молдовы (Locals):*\n"
             seen = set()
+            result = "📰 *Новости Молдовы:*\n"
             count = 0
             for h in headlines:
                 if h not in seen:
@@ -474,17 +353,17 @@ def get_moldova_news():
             if count >= 2:
                 return result.strip()
     except Exception as e:
-        print(f"News locals.md error: {e}")
+        print(f"News esp.md error: {e}")
 
-    # Источник 3: point.md
+    # Источник 3: nokta.md
     try:
-        r = requests.get("https://point.md/ru/", timeout=10, headers=headers)
+        r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
-        headlines = re.findall(r'<a[^>]+href="/ru/novosti/[^"]*"[^>]*>\s*([^<]{20,150})\s*</a>', text)
-        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+        headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]*>([^<]{25,150})</a>', text)
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
         if len(headlines) >= 2:
-            result = "📰 *Новости Молдовы (Point):*\n"
             seen = set()
+            result = "📰 *Новости Молдовы:*\n"
             count = 0
             for h in headlines:
                 if h not in seen:
@@ -496,7 +375,7 @@ def get_moldova_news():
             if count >= 2:
                 return result.strip()
     except Exception as e:
-        print(f"News point.md error: {e}")
+        print(f"News nokta.md error: {e}")
 
     return "📰 Новости: данные недоступны"
 
@@ -508,6 +387,7 @@ async def send_evening_report(uid):
         f"{get_currency()}\n\n"
         f"{get_fuel()}\n\n"
         f"{get_bitcoin()}\n\n"
+        f"{get_moldova_news()}\n\n"
         f"Хорошего вечера! 😊"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
@@ -532,12 +412,7 @@ async def send_report(uid, scheduled=False):
         f"{get_bitcoin()}\n\n"
         f"{get_fuel()}\n\n"
         f"{get_moldova_news()}\n\n"
-        f"{get_fact()}\n\n"
-        f"{get_english_phrase()}\n\n"
-        f"{get_quote()}\n\n"
-        f"{get_joke()}\n\n"
-        f"{get_recipe()}\n\n"
-        f"{get_daily_question()}"
+        f"{get_fact()}"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
 
@@ -625,10 +500,10 @@ async def btn_fuel(m: types.Message):
     uid = m.from_user.id
     await m.answer(get_fuel(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
-@dp.message(F.text == "❓ Вопрос дня")
-async def btn_question(m: types.Message):
+@dp.message(F.text == "📰 Новости")
+async def btn_news(m: types.Message):
     uid = m.from_user.id
-    await m.answer(get_daily_question(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    await m.answer(get_moldova_news(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⚙️ Настройки")
 async def btn_settings(m: types.Message):
