@@ -1,4 +1,4 @@
-import asyncio, requests, os, re, random, sys, json
+import asyncio, requests, os, re, sys, json
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -376,77 +376,127 @@ def get_currency():
         return "❌ Ошибка курса валют"
 
 def get_fuel():
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    benzin = None
+    dizel = None
+
+    # Источник 1: locals.md
     try:
-        r = requests.get(
-            "https://point.md/ru/novosti/story/tsena-na-toplivo/",
-            timeout=10,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
+        r = requests.get("https://locals.md/", timeout=10, headers=headers)
         text = r.text
-        benzin = re.findall(r'(?:бензин|A-95|А-95)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        dizel = re.findall(r'(?:дизел|motorin)[^0-9]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        result = "⛽ *Цены на топливо (MDL/л):*\n"
-        result += f"🟡 Бензин А-95: {benzin[0].replace(',', '.')}\n" if benzin else "🟡 Бензин А-95: —\n"
-        result += f"🔵 Дизель: {dizel[0].replace(',', '.')}" if dizel else "🔵 Дизель: —"
-        return result
-    except:
-        return "⛽ Цены на топливо: данные недоступны"
+        b = re.findall(r'(?:benzin|бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b: benzin = b[0].replace(',', '.')
+        if d: dizel = d[0].replace(',', '.')
+    except Exception as e:
+        print(f"Fuel locals.md error: {e}")
+
+    # Источник 2: point.md
+    if not benzin or not dizel:
+        try:
+            r = requests.get("https://point.md/ru/novosti/story/tsena-na-toplivo/", timeout=10, headers=headers)
+            text = r.text
+            b = re.findall(r'(?:бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+            d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+            if b and not benzin: benzin = b[0].replace(',', '.')
+            if d and not dizel: dizel = d[0].replace(',', '.')
+        except Exception as e:
+            print(f"Fuel point.md error: {e}")
+
+    # Источник 3: newsmaker.md — ищем упоминание цен в новостях
+    if not benzin or not dizel:
+        try:
+            r = requests.get("https://newsmaker.md/ru/category/news", timeout=10, headers=headers)
+            text = r.text
+            b = re.findall(r'(?:бензин|A-95|А-95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+            d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+            if b and not benzin: benzin = b[0].replace(',', '.')
+            if d and not dizel: dizel = d[0].replace(',', '.')
+        except Exception as e:
+            print(f"Fuel newsmaker error: {e}")
+
+    result = "⛽ *Цены на топливо (MDL/л):*\n"
+    result += f"🟡 Бензин А-95: {benzin}\n" if benzin else "🟡 Бензин А-95: —\n"
+    result += f"🔵 Дизель: {dizel}" if dizel else "🔵 Дизель: —"
+    return result
 
 def get_moldova_news():
-    # Пробуем несколько источников
-    sources = [
-        ("https://point.md/ru/", [
-            r'<a[^>]+href="/ru/novosti/[^"]*"[^>]*>\s*([^<]{25,120})\s*</a>',
-            r'class="[^"]*article[^"]*title[^"]*"[^>]*>\s*([^<]{25,120})',
-        ]),
-        ("https://locals.md/", [
-            r'<h\d[^>]*>\s*<a[^>]*>([^<]{25,120})</a>',
-            r'entry-title[^>]*>\s*<a[^>]*>([^<]{25,120})</a>',
-        ]),
-    ]
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    for url, patterns in sources:
-        try:
-            r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            text = r.text
-            for pattern in patterns:
-                headlines = re.findall(pattern, text)
-                if headlines:
-                    seen = set()
-                    result = "📰 *Новости Молдовы:*\n"
-                    count = 0
-                    for h in headlines:
-                        h = h.strip()
-                        if h and h not in seen and len(h) > 25:
-                            seen.add(h)
-                            result += f"• {h}\n"
-                            count += 1
-                        if count >= 4:
-                            break
-                    if count >= 2:
-                        return result.strip()
-        except Exception as e:
-            print(f"News error {url}: {e}")
-            continue
-
-    # Если все источники недоступны — используем RSS
+    # Источник 1: newsmaker.md/ru — русскоязычный, хорошая структура
     try:
-        r = requests.get(
-            "https://feeds.feedburner.com/noi-md-ru",
-            timeout=10,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        titles = re.findall(r'<title><!\[CDATA\[([^\]]{20,120})\]\]></title>', r.text)
-        if not titles:
-            titles = re.findall(r'<title>([^<]{20,120})</title>', r.text)
-        titles = [t for t in titles if 'noi.md' not in t.lower() and 'новости' not in t.lower()[:10]]
-        if titles:
-            result = "📰 *Новости Молдовы:*\n"
-            for t in titles[:4]:
-                result += f"• {t.strip()}\n"
-            return result.strip()
+        r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
+        text = r.text
+        # Ищем заголовки статей
+        headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]+href="https://newsmaker\.md/ru/[^"]*"[^>]*>([^<]{20,150})</a>', text)
+        if not headlines:
+            headlines = re.findall(r'"articleName"[^:]*:\s*"([^"]{20,150})"', text)
+        if not headlines:
+            headlines = re.findall(r'<a[^>]+href="https://newsmaker\.md/ru/[^"]*"[^>]*>\s*([^<]{20,150})\s*</a>', text)
+
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+        if len(headlines) >= 2:
+            result = "📰 *Новости Молдовы (NewsМaker):*\n"
+            seen = set()
+            count = 0
+            for h in headlines:
+                if h not in seen:
+                    seen.add(h)
+                    result += f"• {h}\n"
+                    count += 1
+                if count >= 4:
+                    break
+            if count >= 2:
+                return result.strip()
     except Exception as e:
-        print(f"RSS error: {e}")
+        print(f"News newsmaker error: {e}")
+
+    # Источник 2: locals.md
+    try:
+        r = requests.get("https://locals.md/", timeout=10, headers=headers)
+        text = r.text
+        headlines = re.findall(r'<h\d[^>]*class="[^"]*"[^>]*>\s*<a[^>]*>([^<]{20,150})</a>', text)
+        if not headlines:
+            headlines = re.findall(r'class="entry-title[^"]*"[^>]*>\s*<a[^>]*>([^<]{20,150})</a>', text)
+
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+        if len(headlines) >= 2:
+            result = "📰 *Новости Молдовы (Locals):*\n"
+            seen = set()
+            count = 0
+            for h in headlines:
+                if h not in seen:
+                    seen.add(h)
+                    result += f"• {h}\n"
+                    count += 1
+                if count >= 4:
+                    break
+            if count >= 2:
+                return result.strip()
+    except Exception as e:
+        print(f"News locals.md error: {e}")
+
+    # Источник 3: point.md
+    try:
+        r = requests.get("https://point.md/ru/", timeout=10, headers=headers)
+        text = r.text
+        headlines = re.findall(r'<a[^>]+href="/ru/novosti/[^"]*"[^>]*>\s*([^<]{20,150})\s*</a>', text)
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 20]
+        if len(headlines) >= 2:
+            result = "📰 *Новости Молдовы (Point):*\n"
+            seen = set()
+            count = 0
+            for h in headlines:
+                if h not in seen:
+                    seen.add(h)
+                    result += f"• {h}\n"
+                    count += 1
+                if count >= 4:
+                    break
+            if count >= 2:
+                return result.strip()
+    except Exception as e:
+        print(f"News point.md error: {e}")
 
     return "📰 Новости: данные недоступны"
 
@@ -673,10 +723,7 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["waiting"] = None
                 reschedule(uid)
                 save_users()
-                await m.answer(
-                    f"✅ Утренняя сводка изменена на: {hour:02d}:{minute:02d}",
-                    reply_markup=get_main_keyboard(uid)
-                )
+                await m.answer(f"✅ Утренняя сводка изменена на: {hour:02d}:{minute:02d}", reply_markup=get_main_keyboard(uid))
             else:
                 await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
         except:
@@ -722,10 +769,7 @@ async def handle_input(m: types.Message):
                 await asyncio.sleep(0.1)
             except:
                 pass
-        await m.answer(
-            f"✅ Рассылка отправлена {count} пользователям!",
-            reply_markup=get_main_keyboard(uid)
-        )
+        await m.answer(f"✅ Рассылка отправлена {count} пользователям!", reply_markup=get_main_keyboard(uid))
 
     else:
         await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard(uid))
