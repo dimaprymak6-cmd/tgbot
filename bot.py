@@ -1,7 +1,7 @@
-import asyncio, requests, os, re, sys, json
+requests, os, re, sys, json
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, FSInputFile, URLInputFile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date, datetime
 import fcntl
@@ -23,6 +23,9 @@ dp = Dispatcher()
 scheduler = AsyncIOScheduler(timezone="Europe/Chisinau")
 user_settings = {}
 last_sent = {}
+
+# Картинка для приветствия — флаг Молдовы + красивый пейзаж
+WELCOME_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Flag_of_Moldova.svg/1200px-Flag_of_Moldova.svg.png"
 
 def save_users():
     try:
@@ -90,7 +93,7 @@ FACTS = [
 
 UKRAINE_EVENTS = {
     (1, 1): "🇺🇦 В этот день в 2016 году Украина перешла на безвизовый режим с Грузией.",
-    (1, 22): "🇺🇦 В этот день в 1918 году провозглашена независимость Украинской Народной Республики.",
+    (1, 22): "🇺🇦 В этот день в 1918 году провозглашена независимость УНР.",
     (2, 20): "🇺🇦 В этот день в 2014 году — самый кровавый день Майдана.",
     (2, 22): "🇺🇦 В этот день в 2014 году Янукович бежал из Украины.",
     (2, 24): "🇺🇦 В этот день в 2022 году Россия начала полномасштабное вторжение в Украину.",
@@ -98,6 +101,7 @@ UKRAINE_EVENTS = {
     (2, 28): "🇺🇦 В этот день в 2022 году начались первые переговоры Украины и России.",
     (3, 4): "🇺🇦 В этот день в 2022 году российские войска захватили Запорожскую АЭС.",
     (3, 9): "🇺🇦 В этот день в 1814 году родился Тарас Шевченко — великий украинский поэт.",
+    (3, 15): "🇺🇦 В этот день в 2022 году Россия нанесла удары по Николаеву и Херсону.",
     (3, 16): "🇺🇦 В этот день в 2014 году прошёл незаконный референдум в Крыму.",
     (3, 18): "🇺🇦 В этот день в 2014 году Россия аннексировала Крым.",
     (4, 5): "🇺🇦 В этот день в 2022 году стало известно о массовых убийствах мирных жителей в Буче.",
@@ -109,17 +113,19 @@ UKRAINE_EVENTS = {
     (7, 16): "🇺🇦 В этот день в 1990 году Верховная Рада приняла Декларацию о суверенитете.",
     (8, 24): "🇺🇦 В этот день в 1991 году Украина провозгласила независимость от СССР.",
     (9, 29): "🇺🇦 В этот день в 1941 году массовое убийство в Бабьем Яру — более 33 000 жертв.",
-    (10, 8): "🇺🇦 В этот день в 2022 году взрыв на Керченском мосту — ключевая победа Украины.",
+    (10, 8): "🇺🇦 В этот день в 2022 году взрыв на Керченском мосту.",
     (10, 14): "🇺🇦 День защитника Украины — национальный праздник.",
     (10, 28): "🇺🇦 В этот день в 1944 году вся территория Украины освобождена от нацистов.",
-    (11, 11): "🇺🇦 В этот день в 2022 году Украина освободила Херсон от российской оккупации.",
+    (11, 11): "🇺🇦 В этот день в 2022 году Украина освободила Херсон.",
     (11, 21): "🇺🇦 В этот день в 2013 году начался Евромайдан в Киеве.",
-    (11, 22): "🇺🇦 В этот день в 2004 году началась Оранжевая революция на Украине.",
-    (11, 28): "🇺🇦 День памяти жертв Голодомора — геноцида украинского народа в 1932-1933 годах.",
-    (12, 1): "🇺🇦 В этот день в 1991 году референдум подтвердил независимость Украины — 90% за.",
+    (11, 22): "🇺🇦 В этот день в 2004 году началась Оранжевая революция.",
+    (11, 28): "🇺🇦 День памяти жертв Голодомора 1932-1933 годов.",
+    (12, 1): "🇺🇦 В этот день в 1991 году референдум подтвердил независимость Украины.",
     (12, 5): "🇺🇦 В этот день в 1994 году подписан Будапештский меморандум.",
     (12, 25): "🇺🇦 В этот день в 1991 году СССР официально прекратил существование.",
 }
+
+DIV = "➖➖➖➖➖➖➖➖➖➖"
 
 def get_main_keyboard(uid=0):
     buttons = [
@@ -140,9 +146,10 @@ def get_day_info():
     week_num = today.isocalendar()[1]
     day_of_year = today.timetuple().tm_yday
     holiday = HOLIDAYS.get((today.month, today.day), "")
-    result = f"📅 {day_name}, {date_str} | Неделя #{week_num} | День #{day_of_year}"
+    result = f"📅 *{day_name}, {date_str}*\n"
+    result += f"📆 Неделя #{week_num} | День #{day_of_year}"
     if today.weekday() >= 5:
-        result += " — 🎉 Выходной!"
+        result += " | 🎉 *Выходной!*"
     if holiday:
         result += f"\n{holiday}"
     return result
@@ -155,11 +162,11 @@ def get_ukraine_event():
 def get_war_counter():
     start = date(2022, 2, 24)
     days = (date.today() - start).days
-    return f"⚔️ День войны в Украине: #{days}"
+    return f"⚔️ *День войны в Украине: #{days}*"
 
 def get_fact():
     idx = date.today().timetuple().tm_yday % len(FACTS)
-    return f"💡 {FACTS[idx]}"
+    return f"💡 _{FACTS[idx]}_"
 
 def get_weather(city):
     try:
@@ -167,17 +174,15 @@ def get_weather(city):
             "http://api.openweathermap.org/data/2.5/weather",
             params={"q": city, "appid": WEATHER_API, "units": "metric", "lang": "ru"}
         ).json()
-        desc = r['weather'][0]['description']
-        temp = r['main']['temp']
-        feels = r['main']['feels_like']
+        desc = r['weather'][0]['description'].capitalize()
+        temp = round(r['main']['temp'], 1)
+        feels = round(r['main']['feels_like'], 1)
         humidity = r['main']['humidity']
-        wind = r['wind']['speed']
+        wind = round(r['wind']['speed'], 1)
         return (
-            f"🌤 *Погода в {city}:*\n"
-            f"🌡 {temp}°C (ощущается {feels}°C)\n"
+            f"🌡 *{temp}°C* (ощущается *{feels}°C*)\n"
             f"☁️ {desc}\n"
-            f"💧 Влажность: {humidity}%\n"
-            f"💨 Ветер: {wind} м/с"
+            f"💧 Влажность: *{humidity}%* | 💨 Ветер: *{wind} м/с*"
         )
     except:
         return "❌ Ошибка погоды"
@@ -189,16 +194,16 @@ def get_forecast(city):
             params={"q": city, "appid": WEATHER_API, "units": "metric", "lang": "ru", "cnt": 24}
         ).json()
         seen = set()
-        result = "📅 *Прогноз на 3 дня:*\n"
+        result = ""
         for item in r['list']:
             day = item['dt_txt'][:10]
             if day not in seen and day != str(date.today()):
                 seen.add(day)
                 d = datetime.strptime(day, "%Y-%m-%d")
                 day_name = DAYS_RU[d.weekday()]
-                temp = item['main']['temp']
+                temp = round(item['main']['temp'], 1)
                 desc = item['weather'][0]['description']
-                result += f"• {day_name} {d.strftime('%d.%m')}: {temp}°C, {desc}\n"
+                result += f"• *{day_name} {d.strftime('%d.%m')}:* {temp}°C, {desc}\n"
             if len(seen) >= 3:
                 break
         return result.strip()
@@ -214,7 +219,7 @@ def get_bitcoin():
         ).json()
         btc = r['bitcoin']['usd']
         eth = r['ethereum']['usd']
-        return f"₿ *Крипто (USD):*\n🟡 Bitcoin: ${btc:,.0f}\n🔷 Ethereum: ${eth:,.0f}"
+        return f"🟡 Bitcoin: *${btc:,.0f}*\n🔷 Ethereum: *${eth:,.0f}*"
     except:
         return "₿ Крипто: данные недоступны"
 
@@ -230,15 +235,14 @@ def get_currency():
                 nums = re.findall(r'\d{1,2}[.,]\d{2,3}', part)
                 nums = [n.replace(',', '.') for n in nums]
                 if len(nums) >= 2:
-                    return f"{nums[0]} / {nums[1]}"
+                    return f"*{nums[0]}* / *{nums[1]}*"
                 elif len(nums) == 1:
-                    return f"{nums[0]}"
+                    return f"*{nums[0]}*"
                 return "—"
             except:
                 return "—"
 
         return (
-            f"💱 *Курс валют (покупка / продажа MDL):*\n"
             f"🇺🇸 Доллар США:      {extract('USD')}\n"
             f"🇪🇺 Евро:               {extract('EUR')}\n"
             f"🇷🇴 Лей румынский:  {extract('RON')}\n"
@@ -251,75 +255,76 @@ def get_currency():
 def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    # === Источник 1: esp.md/ru/fuel-rates — цены по всем заправкам ===
     try:
-        r = requests.get("https://esp.md/ru/fuel-rates", timeout=10, headers=headers)
+        r = requests.get("https://bemol.md/ru/prices", timeout=10, headers=headers)
         text = r.text
 
-        # Ищем блоки по заправкам: Bemol, Petrom, Vento, Rompetrol
-        stations = {}
-        # Паттерн: название заправки, потом A-95 цена, DS цена, GAZ цена
-        blocks = re.findall(
-            r'(Bemol|Petrom|Vento|Rompetrol|Lukoil|Sheriff|Pemo)[^·]*·\s*A-95\s*·\s*([\d.]+)\s*MDL\s*·\s*DS\s*·\s*([\d.]+)\s*MDL(?:\s*·\s*GAZ\s*·\s*([\d.]+)\s*MDL)?',
-            text, re.IGNORECASE
-        )
-        if blocks:
-            result = "⛽ *Цены на топливо (MDL/л):*\n\n"
-            for b in blocks[:5]:
-                name, a95, ds, gaz = b
-                line = f"🏪 *{name}:* А-95: {a95} | Дизель: {ds}"
-                if gaz:
-                    line += f" | Газ: {gaz}"
-                result += line + "\n"
+        p98 = re.findall(r'Premium\s*98.*?(\d{2}\.\d{2})', text, re.DOTALL)
+        p95 = re.findall(r'Premium\s*95.*?(\d{2}\.\d{2})', text, re.DOTALL)
+        ds  = re.findall(r'(?:Euro\s*Diesel|Diesel).*?(\d{2}\.\d{2})', text, re.DOTALL)
+        gaz = re.findall(r'(?:LICHEFIAT|GAZ|Gaz).*?(\d{2}\.\d{2})', text, re.DOTALL)
+
+        def valid(lst):
+            for v in lst:
+                if v != "00.00" and float(v) > 10:
+                    return v
+            return None
+
+        b98 = valid(p98)
+        b95 = valid(p95)
+        diesel = valid(ds)
+        lpg = valid(gaz)
+
+        if b95 or diesel:
+            result = ""
+            if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
+            if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
+            if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
+            if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
             return result.strip()
+        print("bemol: данные не найдены")
     except Exception as e:
-        print(f"Fuel esp.md error: {e}")
+        print(f"Fuel bemol error: {e}")
 
-    # === Источник 2: noi.md — официальные цены НАРЭ ===
     try:
-        r = requests.get("https://noi.md/ru/themes/ceny-na-toplivo", timeout=10, headers=headers)
+        r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
         text = r.text
-        # Ищем цены в тексте новостей
-        b95 = re.findall(r'(?:бензин[а]?\s*(?:COR\s*)?(?:A-?95)[^\d]*|A-?95[^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        ds = re.findall(r'(?:дизел[ьяе][^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        if b95 or ds:
-            result = "⛽ *Цены на топливо НАРЭ (MDL/л):*\n"
-            result += f"🟡 Бензин А-95: {b95[0].replace(',', '.')}\n" if b95 else "🟡 Бензин А-95: —\n"
-            result += f"🔵 Дизель: {ds[0].replace(',', '.')}" if ds else "🔵 Дизель: —"
+        b = re.findall(r'(?:benzin|COR.?95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b or d:
+            result = ""
+            result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n" if b else "🟡 Бензин А-95: —\n"
+            result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*" if d else "🔵 Дизель: —"
             return result
     except Exception as e:
-        print(f"Fuel noi.md error: {e}")
+        print(f"Fuel realitatea error: {e}")
 
-    # === Источник 3: newsmaker.md — последняя статья о ценах ===
     try:
-        r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
+        r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
-        b95 = re.findall(r'(?:бензин[^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        ds = re.findall(r'(?:дизел[ьяе][^\d]*)(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        if b95 or ds:
-            result = "⛽ *Цены на топливо (MDL/л):*\n"
-            result += f"🟡 Бензин А-95: {b95[0].replace(',', '.')}\n" if b95 else "🟡 Бензин А-95: —\n"
-            result += f"🔵 Дизель: {ds[0].replace(',', '.')}" if ds else "🔵 Дизель: —"
+        b = re.findall(r'(?:бензин|A-?95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b or d:
+            result = ""
+            result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n" if b else "🟡 Бензин А-95: —\n"
+            result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*" if d else "🔵 Дизель: —"
             return result
     except Exception as e:
-        print(f"Fuel newsmaker error: {e}")
+        print(f"Fuel nokta error: {e}")
 
-    return "⛽ Цены на топливо: данные недоступны"
+    return "данные недоступны"
 
 def get_moldova_news():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    # Источник 1: newsmaker.md
     try:
         r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
         text = r.text
-        headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]+href="https://newsmaker\.md/ru/[^"]*"[^>]*>([^<]{20,150})</a>', text)
-        if not headlines:
-            headlines = re.findall(r'<a[^>]+href="https://newsmaker\.md/ru/[^"#"]*"[^>]*>\s*([^<]{25,150})\s*</a>', text)
+        headlines = re.findall(r'<a[^>]+href="https://newsmaker\.md/ru/[^"#]*"[^>]*>\s*([^<]{25,150})\s*</a>', text)
         headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
         if len(headlines) >= 2:
             seen = set()
-            result = "📰 *Новости Молдовы:*\n"
+            result = ""
             count = 0
             for h in headlines:
                 if h not in seen:
@@ -333,29 +338,6 @@ def get_moldova_news():
     except Exception as e:
         print(f"News newsmaker error: {e}")
 
-    # Источник 2: esp.md
-    try:
-        r = requests.get("https://esp.md/ru/sobytiya", timeout=10, headers=headers)
-        text = r.text
-        headlines = re.findall(r'<a[^>]+href="/ru/sobytiya/[^"]*"[^>]*>\s*([^<]{25,150})\s*</a>', text)
-        headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
-        if len(headlines) >= 2:
-            seen = set()
-            result = "📰 *Новости Молдовы:*\n"
-            count = 0
-            for h in headlines:
-                if h not in seen:
-                    seen.add(h)
-                    result += f"• {h}\n"
-                    count += 1
-                if count >= 4:
-                    break
-            if count >= 2:
-                return result.strip()
-    except Exception as e:
-        print(f"News esp.md error: {e}")
-
-    # Источник 3: nokta.md
     try:
         r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -363,7 +345,7 @@ def get_moldova_news():
         headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
         if len(headlines) >= 2:
             seen = set()
-            result = "📰 *Новости Молдовы:*\n"
+            result = ""
             count = 0
             for h in headlines:
                 if h not in seen:
@@ -375,20 +357,55 @@ def get_moldova_news():
             if count >= 2:
                 return result.strip()
     except Exception as e:
-        print(f"News nokta.md error: {e}")
+        print(f"News nokta error: {e}")
 
-    return "📰 Новости: данные недоступны"
+    try:
+        r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
+        text = r.text
+        headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]*>([^<]{25,150})</a>', text)
+        headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
+        if len(headlines) >= 2:
+            seen = set()
+            result = ""
+            count = 0
+            for h in headlines:
+                if h not in seen:
+                    seen.add(h)
+                    result += f"• {h}\n"
+                    count += 1
+                if count >= 4:
+                    break
+            if count >= 2:
+                return result.strip()
+    except Exception as e:
+        print(f"News realitatea error: {e}")
+
+    return "данные недоступны"
 
 async def send_evening_report(uid):
     city = user_settings.get(uid, {}).get("city", "Edinet")
+    fuel = get_fuel()
+    news = get_moldova_news()
     text = (
-        f"🌙 *Вечерняя сводка — {city}*\n\n"
+        f"🌙 *ВЕЧЕРНЯЯ СВОДКА*\n"
+        f"🏙 _{city}_\n"
+        f"{DIV}\n\n"
+        f"🌤 *ПОГОДА*\n"
         f"{get_weather(city)}\n\n"
+        f"{DIV}\n"
+        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n"
         f"{get_currency()}\n\n"
-        f"{get_fuel()}\n\n"
+        f"{DIV}\n"
+        f"₿ *КРИПТО*\n"
         f"{get_bitcoin()}\n\n"
-        f"{get_moldova_news()}\n\n"
-        f"Хорошего вечера! 😊"
+        f"{DIV}\n"
+        f"⛽ *ТОПЛИВО BEMOL*\n"
+        f"{fuel}\n\n"
+        f"{DIV}\n"
+        f"📰 *НОВОСТИ*\n"
+        f"{news}\n\n"
+        f"{DIV}\n"
+        f"🌙 _Хорошего вечера!_"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
 
@@ -402,16 +419,32 @@ async def send_report(uid, scheduled=False):
 
     city = user_settings.get(uid, {}).get("city", "Edinet")
     ukraine_event = get_ukraine_event()
+    fuel = get_fuel()
+    news = get_moldova_news()
+
     text = (
         f"{get_day_info()}{ukraine_event}\n"
-        f"{get_war_counter()}\n\n"
-        f"🌅 Здравствуйте! Ситуация в городе {city}:\n\n"
+        f"{get_war_counter()}\n"
+        f"{DIV}\n\n"
+        f"🌅 *ДОБРОЕ УТРО, {city.upper()}!*\n\n"
+        f"{DIV}\n"
+        f"🌤 *ПОГОДА*\n"
         f"{get_weather(city)}\n\n"
+        f"📅 *ПРОГНОЗ НА 3 ДНЯ*\n"
         f"{get_forecast(city)}\n\n"
+        f"{DIV}\n"
+        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n"
         f"{get_currency()}\n\n"
+        f"{DIV}\n"
+        f"₿ *КРИПТО*\n"
         f"{get_bitcoin()}\n\n"
-        f"{get_fuel()}\n\n"
-        f"{get_moldova_news()}\n\n"
+        f"{DIV}\n"
+        f"⛽ *ТОПЛИВО BEMOL*\n"
+        f"{fuel}\n\n"
+        f"{DIV}\n"
+        f"📰 *НОВОСТИ МОЛДОВЫ*\n"
+        f"{news}\n\n"
+        f"{DIV}\n"
         f"{get_fact()}"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
@@ -450,7 +483,7 @@ def reschedule(uid):
             scheduler.remove_job(rem_job_id)
 
         async def make_reminder(u=uid, t=rem_text):
-            await bot.send_message(u, f"🔔 Напоминание:\n\n{t}")
+            await bot.send_message(u, f"🔔 *Напоминание!*\n\n{t}", parse_mode="Markdown")
 
         scheduler.add_job(
             make_reminder, "cron",
@@ -465,13 +498,29 @@ async def start(m: types.Message):
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
         save_users()
     reschedule(uid)
-    await m.answer(
-        "✅ Бот активирован!\n\n"
-        "Каждый день в 7:00 — утренняя сводка.\n"
-        "Каждый день в 20:00 — вечерняя сводка.\n\n"
-        "Используй кнопки внизу 👇",
-        reply_markup=get_main_keyboard(uid)
+    welcome_text = (
+        "🇲🇩 *Добро пожаловать в бот Единцы!*\n\n"
+        "Я буду присылать тебе каждый день:\n\n"
+        "🌤 Погоду и прогноз\n"
+        "💱 Курс валют\n"
+        "₿ Курс крипты\n"
+        "⛽ Цены на топливо\n"
+        "📰 Новости Молдовы\n"
+        "💡 Факт о Молдове\n\n"
+        "🕖 *Утренняя сводка:* 07:00\n"
+        "🌙 *Вечерняя сводка:* 20:00\n\n"
+        "Используй кнопки внизу 👇"
     )
+    try:
+        await bot.send_photo(
+            uid,
+            photo=WELCOME_IMAGE,
+            caption=welcome_text,
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard(uid)
+        )
+    except:
+        await m.answer(welcome_text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "📊 Сводка сейчас")
 async def btn_now(m: types.Message):
@@ -488,22 +537,52 @@ async def btn_now(m: types.Message):
 async def btn_weather(m: types.Message):
     uid = m.from_user.id
     city = user_settings.get(uid, {}).get("city", "Edinet")
-    await m.answer(f"{get_weather(city)}\n\n{get_forecast(city)}", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    text = (
+        f"🌤 *ПОГОДА — {city.upper()}*\n"
+        f"{DIV}\n"
+        f"{get_weather(city)}\n\n"
+        f"📅 *ПРОГНОЗ НА 3 ДНЯ*\n"
+        f"{get_forecast(city)}"
+    )
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "💱 Курс валют")
 async def btn_currency(m: types.Message):
     uid = m.from_user.id
-    await m.answer(f"{get_currency()}\n\n{get_bitcoin()}", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    text = (
+        f"💱 *КУРС ВАЛЮТ*\n"
+        f"_{date.today().strftime('%d.%m.%Y')} | покупка / продажа MDL_\n"
+        f"{DIV}\n"
+        f"{get_currency()}\n\n"
+        f"{DIV}\n"
+        f"₿ *КРИПТО (USD)*\n"
+        f"{get_bitcoin()}"
+    )
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⛽ Топливо")
 async def btn_fuel(m: types.Message):
     uid = m.from_user.id
-    await m.answer(get_fuel(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    fuel = get_fuel()
+    text = (
+        f"⛽ *ЦЕНЫ НА ТОПЛИВО*\n"
+        f"_BEMOL | {date.today().strftime('%d.%m.%Y')}_\n"
+        f"{DIV}\n"
+        f"{fuel}"
+    )
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "📰 Новости")
 async def btn_news(m: types.Message):
     uid = m.from_user.id
-    await m.answer(get_moldova_news(), parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+    news = get_moldova_news()
+    text = (
+        f"📰 *НОВОСТИ МОЛДОВЫ*\n"
+        f"_{date.today().strftime('%d.%m.%Y')}_\n"
+        f"{DIV}\n"
+        f"{news}"
+    )
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⚙️ Настройки")
 async def btn_settings(m: types.Message):
@@ -511,14 +590,15 @@ async def btn_settings(m: types.Message):
     s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
     rem = ""
     if s.get("reminder_hour") is not None:
-        rem = f"\n🔔 Напоминание: {s.get('reminder_hour', 0):02d}:{s.get('reminder_minute', 0):02d} — {s.get('reminder_text', '')}"
-    await m.answer(
-        f"⚙️ Текущие настройки:\n"
-        f"🏙 Город: {s.get('city', 'Edinet')}\n"
-        f"⏰ Утренняя сводка: {s.get('hour', 7):02d}:{s.get('minute', 0):02d}\n"
-        f"🌙 Вечерняя сводка: 20:00{rem}",
-        reply_markup=get_main_keyboard(uid)
+        rem = f"\n🔔 Напоминание: *{s.get('reminder_hour', 0):02d}:{s.get('reminder_minute', 0):02d}* — {s.get('reminder_text', '')}"
+    text = (
+        f"⚙️ *НАСТРОЙКИ*\n"
+        f"{DIV}\n"
+        f"🏙 Город: *{s.get('city', 'Edinet')}*\n"
+        f"⏰ Утренняя сводка: *{s.get('hour', 7):02d}:{s.get('minute', 0):02d}*\n"
+        f"🌙 Вечерняя сводка: *20:00*{rem}"
     )
+    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "🏙 Сменить город")
 async def btn_setcity(m: types.Message):
@@ -526,7 +606,7 @@ async def btn_setcity(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "city"
-    await m.answer("🏙 Введите название города на английском (например: Chisinau, Balti, Bucuresti):")
+    await m.answer("🏙 Введите название города на английском (например: *Chisinau*, *Balti*, *Bucuresti*):", parse_mode="Markdown")
 
 @dp.message(F.text == "⏰ Сменить время")
 async def btn_settime(m: types.Message):
@@ -534,7 +614,7 @@ async def btn_settime(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "time"
-    await m.answer("⏰ Введите время утренней сводки в формате ЧЧ:ММ (например: 07:00):")
+    await m.answer("⏰ Введите время утренней сводки в формате *ЧЧ:ММ* (например: *07:00*):", parse_mode="Markdown")
 
 @dp.message(F.text == "🔔 Напоминание")
 async def btn_reminder(m: types.Message):
@@ -542,14 +622,14 @@ async def btn_reminder(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "reminder_time"
-    await m.answer("🔔 Введите время напоминания в формате ЧЧ:ММ (например: 09:00):")
+    await m.answer("🔔 Введите время напоминания в формате *ЧЧ:ММ* (например: *09:00*):", parse_mode="Markdown")
 
 @dp.message(F.text == "👥 Пользователи")
 async def btn_users(m: types.Message):
     if m.from_user.id != ADMIN_ID:
         return
     count = len(user_settings)
-    await m.answer(f"👥 Всего пользователей: {count}", reply_markup=get_main_keyboard(m.from_user.id))
+    await m.answer(f"👥 *Всего пользователей: {count}*", parse_mode="Markdown", reply_markup=get_main_keyboard(m.from_user.id))
 
 @dp.message(F.text == "📣 Рассылка")
 async def btn_broadcast(m: types.Message):
@@ -585,7 +665,7 @@ async def handle_input(m: types.Message):
         user_settings[uid]["waiting"] = None
         reschedule(uid)
         save_users()
-        await m.answer(f"✅ Город изменён на: {m.text.strip()}", reply_markup=get_main_keyboard(uid))
+        await m.answer(f"✅ Город изменён на: *{m.text.strip()}*", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "time":
         try:
@@ -598,11 +678,11 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["waiting"] = None
                 reschedule(uid)
                 save_users()
-                await m.answer(f"✅ Утренняя сводка изменена на: {hour:02d}:{minute:02d}", reply_markup=get_main_keyboard(uid))
+                await m.answer(f"✅ Утренняя сводка изменена на: *{hour:02d}:{minute:02d}*", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
             else:
-                await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+                await m.answer("❌ Неверный формат! Введите как *07:00* или *08:30*", parse_mode="Markdown")
         except:
-            await m.answer("❌ Неверный формат! Введите как 07:00 или 08:30")
+            await m.answer("❌ Неверный формат! Введите как *07:00* или *08:30*", parse_mode="Markdown")
 
     elif waiting == "reminder_time":
         try:
@@ -614,11 +694,11 @@ async def handle_input(m: types.Message):
                 user_settings[uid]["reminder_minute"] = minute
                 user_settings[uid]["waiting"] = "reminder_text"
                 save_users()
-                await m.answer(f"✅ Время {hour:02d}:{minute:02d} установлено!\nТеперь введите текст напоминания:")
+                await m.answer(f"✅ Время *{hour:02d}:{minute:02d}* установлено!\nТеперь введите текст напоминания:", parse_mode="Markdown")
             else:
-                await m.answer("❌ Неверный формат! Введите как 09:00")
+                await m.answer("❌ Неверный формат! Введите как *09:00*", parse_mode="Markdown")
         except:
-            await m.answer("❌ Неверный формат! Введите как 09:00")
+            await m.answer("❌ Неверный формат! Введите как *09:00*", parse_mode="Markdown")
 
     elif waiting == "reminder_text":
         user_settings[uid]["reminder_text"] = m.text.strip()
@@ -628,7 +708,8 @@ async def handle_input(m: types.Message):
         rh = user_settings[uid].get("reminder_hour", 9)
         rm = user_settings[uid].get("reminder_minute", 0)
         await m.answer(
-            f"✅ Напоминание установлено на {rh:02d}:{rm:02d}\nТекст: {m.text.strip()}",
+            f"✅ Напоминание установлено на *{rh:02d}:{rm:02d}*\nТекст: _{m.text.strip()}_",
+            parse_mode="Markdown",
             reply_markup=get_main_keyboard(uid)
         )
 
@@ -639,12 +720,12 @@ async def handle_input(m: types.Message):
         count = 0
         for user_id in list(user_settings.keys()):
             try:
-                await bot.send_message(user_id, f"📣 Сообщение от администратора:\n\n{m.text}")
+                await bot.send_message(user_id, f"📣 *Сообщение от администратора:*\n\n{m.text}", parse_mode="Markdown")
                 count += 1
                 await asyncio.sleep(0.1)
             except:
                 pass
-        await m.answer(f"✅ Рассылка отправлена {count} пользователям!", reply_markup=get_main_keyboard(uid))
+        await m.answer(f"✅ Рассылка отправлена *{count}* пользователям!", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
     else:
         await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard(uid))
