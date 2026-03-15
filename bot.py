@@ -1,7 +1,7 @@
-requests, os, re, sys, json
+import asyncio, requests, os, re, sys, json
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, FSInputFile, URLInputFile
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import date, datetime
 import fcntl
@@ -24,7 +24,6 @@ scheduler = AsyncIOScheduler(timezone="Europe/Chisinau")
 user_settings = {}
 last_sent = {}
 
-# Картинка для приветствия — флаг Молдовы + красивый пейзаж
 WELCOME_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Flag_of_Moldova.svg/1200px-Flag_of_Moldova.svg.png"
 
 def save_users():
@@ -255,25 +254,41 @@ def get_currency():
 def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
+    # Источник 1: bemol.md
     try:
         r = requests.get("https://bemol.md/ru/prices", timeout=10, headers=headers)
         text = r.text
 
-        p98 = re.findall(r'Premium\s*98.*?(\d{2}\.\d{2})', text, re.DOTALL)
-        p95 = re.findall(r'Premium\s*95.*?(\d{2}\.\d{2})', text, re.DOTALL)
-        ds  = re.findall(r'(?:Euro\s*Diesel|Diesel).*?(\d{2}\.\d{2})', text, re.DOTALL)
-        gaz = re.findall(r'(?:LICHEFIAT|GAZ|Gaz).*?(\d{2}\.\d{2})', text, re.DOTALL)
+        b98 = None
+        b95 = None
+        diesel = None
+        lpg = None
 
-        def valid(lst):
-            for v in lst:
-                if v != "00.00" and float(v) > 10:
-                    return v
-            return None
+        # Разбиваем HTML на блоки по названиям топлива
+        blocks = re.split(r'(Premium\s*98|Premium\s*95|Euro\s*Diesel|Diesel|LICHEFIAT\s*GAZ|GAZ)', text)
 
-        b98 = valid(p98)
-        b95 = valid(p95)
-        diesel = valid(ds)
-        lpg = valid(gaz)
+        for i, block in enumerate(blocks):
+            block_clean = block.strip()
+            if i + 1 >= len(blocks):
+                break
+            next_block = blocks[i + 1]
+            # Из следующего блока берём все числа XX.XX и пропускаем 00.00
+            nums = re.findall(r'\d{2}\.\d{2}', next_block)
+            valid = [n for n in nums if n != "00.00" and float(n) > 10]
+            if not valid:
+                continue
+            price = valid[0]
+
+            if re.match(r'Premium\s*98', block_clean, re.IGNORECASE) and not b98:
+                b98 = price
+            elif re.match(r'Premium\s*95', block_clean, re.IGNORECASE) and not b95:
+                b95 = price
+            elif re.match(r'(?:Euro\s*Diesel|Diesel)', block_clean, re.IGNORECASE) and not diesel:
+                diesel = price
+            elif re.match(r'(?:LICHEFIAT\s*GAZ|GAZ)', block_clean, re.IGNORECASE) and not lpg:
+                lpg = price
+
+        print(f"bemol: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
 
         if b95 or diesel:
             result = ""
@@ -282,10 +297,12 @@ def get_fuel():
             if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
             if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
             return result.strip()
-        print("bemol: данные не найдены")
+
+        print("bemol: цены не найдены, пробуем резерв")
     except Exception as e:
         print(f"Fuel bemol error: {e}")
 
+    # Источник 2: realitatea.md
     try:
         r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
         text = r.text
@@ -293,12 +310,13 @@ def get_fuel():
         d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
         if b or d:
             result = ""
-            result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n" if b else "🟡 Бензин А-95: —\n"
-            result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*" if d else "🔵 Дизель: —"
-            return result
+            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n"
+            if d: result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*"
+            return result.strip()
     except Exception as e:
         print(f"Fuel realitatea error: {e}")
 
+    # Источник 3: nokta.md
     try:
         r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -306,9 +324,9 @@ def get_fuel():
         d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
         if b or d:
             result = ""
-            result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n" if b else "🟡 Бензин А-95: —\n"
-            result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*" if d else "🔵 Дизель: —"
-            return result
+            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n"
+            if d: result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*"
+            return result.strip()
     except Exception as e:
         print(f"Fuel nokta error: {e}")
 
@@ -317,6 +335,7 @@ def get_fuel():
 def get_moldova_news():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
+    # Источник 1: newsmaker.md
     try:
         r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -338,6 +357,7 @@ def get_moldova_news():
     except Exception as e:
         print(f"News newsmaker error: {e}")
 
+    # Источник 2: nokta.md
     try:
         r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -359,6 +379,7 @@ def get_moldova_news():
     except Exception as e:
         print(f"News nokta error: {e}")
 
+    # Источник 3: realitatea.md
     try:
         r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
         text = r.text
@@ -504,7 +525,7 @@ async def start(m: types.Message):
         "🌤 Погоду и прогноз\n"
         "💱 Курс валют\n"
         "₿ Курс крипты\n"
-        "⛽ Цены на топливо\n"
+        "⛽ Цены на топливо BEMOL\n"
         "📰 Новости Молдовы\n"
         "💡 Факт о Молдове\n\n"
         "🕖 *Утренняя сводка:* 07:00\n"
@@ -606,7 +627,7 @@ async def btn_setcity(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "city"
-    await m.answer("🏙 Введите название города на английском (например: *Chisinau*, *Balti*, *Bucuresti*):", parse_mode="Markdown")
+    await m.answer("🏙 Введите название города на английском\n_(например: Chisinau, Balti, Bucuresti)_:", parse_mode="Markdown")
 
 @dp.message(F.text == "⏰ Сменить время")
 async def btn_settime(m: types.Message):
@@ -614,7 +635,7 @@ async def btn_settime(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "time"
-    await m.answer("⏰ Введите время утренней сводки в формате *ЧЧ:ММ* (например: *07:00*):", parse_mode="Markdown")
+    await m.answer("⏰ Введите время утренней сводки\n_Формат: ЧЧ:ММ (например: 07:00)_:", parse_mode="Markdown")
 
 @dp.message(F.text == "🔔 Напоминание")
 async def btn_reminder(m: types.Message):
@@ -622,7 +643,7 @@ async def btn_reminder(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
     user_settings[uid]["waiting"] = "reminder_time"
-    await m.answer("🔔 Введите время напоминания в формате *ЧЧ:ММ* (например: *09:00*):", parse_mode="Markdown")
+    await m.answer("🔔 Введите время напоминания\n_Формат: ЧЧ:ММ (например: 09:00)_:", parse_mode="Markdown")
 
 @dp.message(F.text == "👥 Пользователи")
 async def btn_users(m: types.Message):
@@ -680,9 +701,9 @@ async def handle_input(m: types.Message):
                 save_users()
                 await m.answer(f"✅ Утренняя сводка изменена на: *{hour:02d}:{minute:02d}*", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
             else:
-                await m.answer("❌ Неверный формат! Введите как *07:00* или *08:30*", parse_mode="Markdown")
+                await m.answer("❌ Неверный формат! Введите как *07:00*", parse_mode="Markdown")
         except:
-            await m.answer("❌ Неверный формат! Введите как *07:00* или *08:30*", parse_mode="Markdown")
+            await m.answer("❌ Неверный формат! Введите как *07:00*", parse_mode="Markdown")
 
     elif waiting == "reminder_time":
         try:
@@ -708,7 +729,7 @@ async def handle_input(m: types.Message):
         rh = user_settings[uid].get("reminder_hour", 9)
         rm = user_settings[uid].get("reminder_minute", 0)
         await m.answer(
-            f"✅ Напоминание установлено на *{rh:02d}:{rm:02d}*\nТекст: _{m.text.strip()}_",
+            f"✅ Напоминание установлено на *{rh:02d}:{rm:02d}*\n_{m.text.strip()}_",
             parse_mode="Markdown",
             reply_markup=get_main_keyboard(uid)
         )
