@@ -255,50 +255,66 @@ def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
     # Источник 1: bemol.md
+    # HTML структура: "Premium\n98\n\n00.00\n\n29.95\n\nPremium\n95\n\n00.00\n\n26.22..."
+    # Все цены идут парами: 00.00 (заглушка) + реальная цена
+    # Берём все числа вида XX.XX из блока с ценами и берём каждое второе
     try:
         r = requests.get("https://bemol.md/ru/prices", timeout=10, headers=headers)
         text = r.text
 
-        b98 = None
-        b95 = None
-        diesel = None
-        lpg = None
+        # Вырезаем только часть между логотипом и заголовком
+        # Ищем блок где перечислены все цены
+        price_block = re.search(
+            r'logo-flower\.png\)(.*?)# Цены на топливо',
+            text, re.DOTALL
+        )
 
-        # Разбиваем HTML на блоки по названиям топлива
-        blocks = re.split(r'(Premium\s*98|Premium\s*95|Euro\s*Diesel|Diesel|LICHEFIAT\s*GAZ|GAZ)', text)
+        if price_block:
+            block = price_block.group(1)
+            # Все числа XX.XX в этом блоке
+            all_nums = re.findall(r'\d{2}\.\d{2}', block)
+            print(f"bemol all_nums: {all_nums}")
 
-        for i, block in enumerate(blocks):
-            block_clean = block.strip()
-            if i + 1 >= len(blocks):
-                break
-            next_block = blocks[i + 1]
-            # Из следующего блока берём все числа XX.XX и пропускаем 00.00
-            nums = re.findall(r'\d{2}\.\d{2}', next_block)
-            valid = [n for n in nums if n != "00.00" and float(n) > 10]
-            if not valid:
-                continue
-            price = valid[0]
+            # Структура: [00.00, 29.95, 00.00, 26.22, 00.00, 26.24, 00.00, 13.80]
+            # Реальные цены — нечётные индексы (1, 3, 5, 7)
+            real_prices = []
+            for i, n in enumerate(all_nums):
+                if n != "00.00" and float(n) > 10:
+                    real_prices.append(n)
 
-            if re.match(r'Premium\s*98', block_clean, re.IGNORECASE) and not b98:
-                b98 = price
-            elif re.match(r'Premium\s*95', block_clean, re.IGNORECASE) and not b95:
-                b95 = price
-            elif re.match(r'(?:Euro\s*Diesel|Diesel)', block_clean, re.IGNORECASE) and not diesel:
-                diesel = price
-            elif re.match(r'(?:LICHEFIAT\s*GAZ|GAZ)', block_clean, re.IGNORECASE) and not lpg:
-                lpg = price
+            print(f"bemol real_prices: {real_prices}")
 
-        print(f"bemol: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
+            # Определяем какие топлива есть по названиям в блоке
+            has_98 = bool(re.search(r'Premium\s*98', block, re.IGNORECASE))
+            has_95 = bool(re.search(r'Premium\s*95', block, re.IGNORECASE))
+            has_diesel = bool(re.search(r'(?:Euro\s*Diesel|Diesel)', block, re.IGNORECASE))
+            has_gaz = bool(re.search(r'(?:LICHEFIAT|GAZ)', block, re.IGNORECASE))
 
-        if b95 or diesel:
-            result = ""
-            if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
-            if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
-            if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
-            if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
-            return result.strip()
+            idx = 0
+            b98 = None
+            b95 = None
+            diesel = None
+            lpg = None
 
-        print("bemol: цены не найдены, пробуем резерв")
+            if has_98 and idx < len(real_prices):
+                b98 = real_prices[idx]; idx += 1
+            if has_95 and idx < len(real_prices):
+                b95 = real_prices[idx]; idx += 1
+            if has_diesel and idx < len(real_prices):
+                diesel = real_prices[idx]; idx += 1
+            if has_gaz and idx < len(real_prices):
+                lpg = real_prices[idx]; idx += 1
+
+            print(f"bemol parsed: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
+
+            if b95 or diesel or b98:
+                result = ""
+                if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
+                if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
+                if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
+                if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
+                return result.strip()
+
     except Exception as e:
         print(f"Fuel bemol error: {e}")
 
@@ -335,7 +351,6 @@ def get_fuel():
 def get_moldova_news():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    # Источник 1: newsmaker.md
     try:
         r = requests.get("https://newsmaker.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -357,7 +372,6 @@ def get_moldova_news():
     except Exception as e:
         print(f"News newsmaker error: {e}")
 
-    # Источник 2: nokta.md
     try:
         r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
         text = r.text
@@ -379,7 +393,6 @@ def get_moldova_news():
     except Exception as e:
         print(f"News nokta error: {e}")
 
-    # Источник 3: realitatea.md
     try:
         r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
         text = r.text
@@ -478,22 +491,14 @@ def reschedule(uid):
     job_id = f"report_{uid}"
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
-    scheduler.add_job(
-        send_report, "cron",
-        hour=hour, minute=minute,
-        args=[uid, True], id=job_id,
-        replace_existing=True
-    )
+    scheduler.add_job(send_report, "cron", hour=hour, minute=minute,
+                      args=[uid, True], id=job_id, replace_existing=True)
 
     evening_job_id = f"evening_{uid}"
     if scheduler.get_job(evening_job_id):
         scheduler.remove_job(evening_job_id)
-    scheduler.add_job(
-        send_evening_report, "cron",
-        hour=20, minute=0,
-        args=[uid], id=evening_job_id,
-        replace_existing=True
-    )
+    scheduler.add_job(send_evening_report, "cron", hour=20, minute=0,
+                      args=[uid], id=evening_job_id, replace_existing=True)
 
     rem_hour = s.get("reminder_hour")
     rem_minute = s.get("reminder_minute")
@@ -502,15 +507,10 @@ def reschedule(uid):
         rem_job_id = f"reminder_{uid}"
         if scheduler.get_job(rem_job_id):
             scheduler.remove_job(rem_job_id)
-
         async def make_reminder(u=uid, t=rem_text):
             await bot.send_message(u, f"🔔 *Напоминание!*\n\n{t}", parse_mode="Markdown")
-
-        scheduler.add_job(
-            make_reminder, "cron",
-            hour=rem_hour, minute=rem_minute,
-            id=rem_job_id, replace_existing=True
-        )
+        scheduler.add_job(make_reminder, "cron", hour=rem_hour, minute=rem_minute,
+                          id=rem_job_id, replace_existing=True)
 
 @dp.message(Command("start"))
 async def start(m: types.Message):
@@ -533,13 +533,8 @@ async def start(m: types.Message):
         "Используй кнопки внизу 👇"
     )
     try:
-        await bot.send_photo(
-            uid,
-            photo=WELCOME_IMAGE,
-            caption=welcome_text,
-            parse_mode="Markdown",
-            reply_markup=get_main_keyboard(uid)
-        )
+        await bot.send_photo(uid, photo=WELCOME_IMAGE, caption=welcome_text,
+                             parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
     except:
         await m.answer(welcome_text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
@@ -548,8 +543,7 @@ async def btn_now(m: types.Message):
     uid = m.from_user.id
     key = f"now_{uid}"
     if key in last_sent:
-        diff = (datetime.now() - last_sent[key]).total_seconds()
-        if diff < 10:
+        if (datetime.now() - last_sent[key]).total_seconds() < 10:
             return
     last_sent[key] = datetime.now()
     await send_report(uid, scheduled=False)
@@ -558,51 +552,27 @@ async def btn_now(m: types.Message):
 async def btn_weather(m: types.Message):
     uid = m.from_user.id
     city = user_settings.get(uid, {}).get("city", "Edinet")
-    text = (
-        f"🌤 *ПОГОДА — {city.upper()}*\n"
-        f"{DIV}\n"
-        f"{get_weather(city)}\n\n"
-        f"📅 *ПРОГНОЗ НА 3 ДНЯ*\n"
-        f"{get_forecast(city)}"
-    )
+    text = (f"🌤 *ПОГОДА — {city.upper()}*\n{DIV}\n"
+            f"{get_weather(city)}\n\n📅 *ПРОГНОЗ НА 3 ДНЯ*\n{get_forecast(city)}")
     await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "💱 Курс валют")
 async def btn_currency(m: types.Message):
     uid = m.from_user.id
-    text = (
-        f"💱 *КУРС ВАЛЮТ*\n"
-        f"_{date.today().strftime('%d.%m.%Y')} | покупка / продажа MDL_\n"
-        f"{DIV}\n"
-        f"{get_currency()}\n\n"
-        f"{DIV}\n"
-        f"₿ *КРИПТО (USD)*\n"
-        f"{get_bitcoin()}"
-    )
+    text = (f"💱 *КУРС ВАЛЮТ*\n_{date.today().strftime('%d.%m.%Y')} | покупка / продажа MDL_\n{DIV}\n"
+            f"{get_currency()}\n\n{DIV}\n₿ *КРИПТО (USD)*\n{get_bitcoin()}")
     await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⛽ Топливо")
 async def btn_fuel(m: types.Message):
     uid = m.from_user.id
-    fuel = get_fuel()
-    text = (
-        f"⛽ *ЦЕНЫ НА ТОПЛИВО*\n"
-        f"_BEMOL | {date.today().strftime('%d.%m.%Y')}_\n"
-        f"{DIV}\n"
-        f"{fuel}"
-    )
+    text = (f"⛽ *ЦЕНЫ НА ТОПЛИВО*\n_BEMOL | {date.today().strftime('%d.%m.%Y')}_\n{DIV}\n{get_fuel()}")
     await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "📰 Новости")
 async def btn_news(m: types.Message):
     uid = m.from_user.id
-    news = get_moldova_news()
-    text = (
-        f"📰 *НОВОСТИ МОЛДОВЫ*\n"
-        f"_{date.today().strftime('%d.%m.%Y')}_\n"
-        f"{DIV}\n"
-        f"{news}"
-    )
+    text = (f"📰 *НОВОСТИ МОЛДОВЫ*\n_{date.today().strftime('%d.%m.%Y')}_\n{DIV}\n{get_moldova_news()}")
     await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "⚙️ Настройки")
@@ -611,15 +581,13 @@ async def btn_settings(m: types.Message):
     s = user_settings.get(uid, {"city": "Edinet", "hour": 7, "minute": 0})
     rem = ""
     if s.get("reminder_hour") is not None:
-        rem = f"\n🔔 Напоминание: *{s.get('reminder_hour', 0):02d}:{s.get('reminder_minute', 0):02d}* — {s.get('reminder_text', '')}"
-    text = (
-        f"⚙️ *НАСТРОЙКИ*\n"
-        f"{DIV}\n"
-        f"🏙 Город: *{s.get('city', 'Edinet')}*\n"
-        f"⏰ Утренняя сводка: *{s.get('hour', 7):02d}:{s.get('minute', 0):02d}*\n"
-        f"🌙 Вечерняя сводка: *20:00*{rem}"
-    )
-    await m.answer(text, parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+        rem = f"\n🔔 Напоминание: *{s.get('reminder_hour',0):02d}:{s.get('reminder_minute',0):02d}* — {s.get('reminder_text','')}"
+    await m.answer(
+        f"⚙️ *НАСТРОЙКИ*\n{DIV}\n"
+        f"🏙 Город: *{s.get('city','Edinet')}*\n"
+        f"⏰ Утренняя сводка: *{s.get('hour',7):02d}:{s.get('minute',0):02d}*\n"
+        f"🌙 Вечерняя сводка: *20:00*{rem}",
+        parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
 @dp.message(F.text == "🏙 Сменить город")
 async def btn_setcity(m: types.Message):
@@ -649,8 +617,8 @@ async def btn_reminder(m: types.Message):
 async def btn_users(m: types.Message):
     if m.from_user.id != ADMIN_ID:
         return
-    count = len(user_settings)
-    await m.answer(f"👥 *Всего пользователей: {count}*", parse_mode="Markdown", reply_markup=get_main_keyboard(m.from_user.id))
+    await m.answer(f"👥 *Всего пользователей: {len(user_settings)}*",
+                   parse_mode="Markdown", reply_markup=get_main_keyboard(m.from_user.id))
 
 @dp.message(F.text == "📣 Рассылка")
 async def btn_broadcast(m: types.Message):
@@ -666,8 +634,7 @@ async def cmd_now(m: types.Message):
     uid = m.from_user.id
     key = f"now_{uid}"
     if key in last_sent:
-        diff = (datetime.now() - last_sent[key]).total_seconds()
-        if diff < 10:
+        if (datetime.now() - last_sent[key]).total_seconds() < 10:
             return
     last_sent[key] = datetime.now()
     await send_report(uid, scheduled=False)
@@ -678,7 +645,6 @@ async def handle_input(m: types.Message):
     if uid not in user_settings:
         user_settings[uid] = {"city": "Edinet", "hour": 7, "minute": 0, "waiting": None}
         save_users()
-
     waiting = user_settings[uid].get("waiting")
 
     if waiting == "city":
@@ -686,20 +652,20 @@ async def handle_input(m: types.Message):
         user_settings[uid]["waiting"] = None
         reschedule(uid)
         save_users()
-        await m.answer(f"✅ Город изменён на: *{m.text.strip()}*", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+        await m.answer(f"✅ Город изменён на: *{m.text.strip()}*",
+                       parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "time":
         try:
-            parts = m.text.strip().split(":")
-            hour = int(parts[0])
-            minute = int(parts[1])
-            if 0 <= hour <= 23 and 0 <= minute <= 59:
-                user_settings[uid]["hour"] = hour
-                user_settings[uid]["minute"] = minute
+            h, mi = int(m.text.strip().split(":")[0]), int(m.text.strip().split(":")[1])
+            if 0 <= h <= 23 and 0 <= mi <= 59:
+                user_settings[uid]["hour"] = h
+                user_settings[uid]["minute"] = mi
                 user_settings[uid]["waiting"] = None
                 reschedule(uid)
                 save_users()
-                await m.answer(f"✅ Утренняя сводка изменена на: *{hour:02d}:{minute:02d}*", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
+                await m.answer(f"✅ Утренняя сводка изменена на: *{h:02d}:{mi:02d}*",
+                               parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
             else:
                 await m.answer("❌ Неверный формат! Введите как *07:00*", parse_mode="Markdown")
         except:
@@ -707,15 +673,14 @@ async def handle_input(m: types.Message):
 
     elif waiting == "reminder_time":
         try:
-            parts = m.text.strip().split(":")
-            hour = int(parts[0])
-            minute = int(parts[1])
-            if 0 <= hour <= 23 and 0 <= minute <= 59:
-                user_settings[uid]["reminder_hour"] = hour
-                user_settings[uid]["reminder_minute"] = minute
+            h, mi = int(m.text.strip().split(":")[0]), int(m.text.strip().split(":")[1])
+            if 0 <= h <= 23 and 0 <= mi <= 59:
+                user_settings[uid]["reminder_hour"] = h
+                user_settings[uid]["reminder_minute"] = mi
                 user_settings[uid]["waiting"] = "reminder_text"
                 save_users()
-                await m.answer(f"✅ Время *{hour:02d}:{minute:02d}* установлено!\nТеперь введите текст напоминания:", parse_mode="Markdown")
+                await m.answer(f"✅ Время *{h:02d}:{mi:02d}* установлено!\nТеперь введите текст напоминания:",
+                               parse_mode="Markdown")
             else:
                 await m.answer("❌ Неверный формат! Введите как *09:00*", parse_mode="Markdown")
         except:
@@ -728,11 +693,8 @@ async def handle_input(m: types.Message):
         save_users()
         rh = user_settings[uid].get("reminder_hour", 9)
         rm = user_settings[uid].get("reminder_minute", 0)
-        await m.answer(
-            f"✅ Напоминание установлено на *{rh:02d}:{rm:02d}*\n_{m.text.strip()}_",
-            parse_mode="Markdown",
-            reply_markup=get_main_keyboard(uid)
-        )
+        await m.answer(f"✅ Напоминание установлено на *{rh:02d}:{rm:02d}*\n_{m.text.strip()}_",
+                       parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
 
     elif waiting == "broadcast":
         if uid != ADMIN_ID:
@@ -741,13 +703,14 @@ async def handle_input(m: types.Message):
         count = 0
         for user_id in list(user_settings.keys()):
             try:
-                await bot.send_message(user_id, f"📣 *Сообщение от администратора:*\n\n{m.text}", parse_mode="Markdown")
+                await bot.send_message(user_id, f"📣 *Сообщение от администратора:*\n\n{m.text}",
+                                       parse_mode="Markdown")
                 count += 1
                 await asyncio.sleep(0.1)
             except:
                 pass
-        await m.answer(f"✅ Рассылка отправлена *{count}* пользователям!", parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
-
+        await m.answer(f"✅ Рассылка отправлена *{count}* пользователям!",
+                       parse_mode="Markdown", reply_markup=get_main_keyboard(uid))
     else:
         await m.answer("Используй кнопки внизу 👇", reply_markup=get_main_keyboard(uid))
 
