@@ -255,65 +255,48 @@ def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
     # Источник 1: bemol.md
-    # HTML структура: "Premium\n98\n\n00.00\n\n29.95\n\nPremium\n95\n\n00.00\n\n26.22..."
-    # Все цены идут парами: 00.00 (заглушка) + реальная цена
-    # Берём все числа вида XX.XX из блока с ценами и берём каждое второе
+    # Страница после парсинга содержит текст:
+    # "Premium\n98\n\n00.00\n\n29.95\nPremium\n95\n\n00.00\n\n26.22\nEuro\nDiesel\n\n00.00\n\n26.24\nLICHEFIAT\nGAZ\n\n00.00\n\n13.80"
+    # Просто берём ВСЕ числа XX.XX со страницы, убираем 00.00, берём первые 4
     try:
         r = requests.get("https://bemol.md/ru/prices", timeout=10, headers=headers)
         text = r.text
 
-        # Вырезаем только часть между логотипом и заголовком
-        # Ищем блок где перечислены все цены
-        price_block = re.search(
-            r'logo-flower\.png\)(.*?)# Цены на топливо',
-            text, re.DOTALL
-        )
+        # Все числа формата XX.XX на странице
+        all_nums = re.findall(r'\b\d{2}\.\d{2}\b', text)
+        print(f"bemol all_nums: {all_nums}")
 
-        if price_block:
-            block = price_block.group(1)
-            # Все числа XX.XX в этом блоке
-            all_nums = re.findall(r'\d{2}\.\d{2}', block)
-            print(f"bemol all_nums: {all_nums}")
+        # Фильтруем — убираем 00.00, берём числа > 10 (цены топлива)
+        prices = [n for n in all_nums if n != "00.00" and float(n) > 10]
+        print(f"bemol prices: {prices}")
 
-            # Структура: [00.00, 29.95, 00.00, 26.22, 00.00, 26.24, 00.00, 13.80]
-            # Реальные цены — нечётные индексы (1, 3, 5, 7)
-            real_prices = []
-            for i, n in enumerate(all_nums):
-                if n != "00.00" and float(n) > 10:
-                    real_prices.append(n)
+        # Определяем какие виды топлива есть на странице
+        has_98 = "Premium\n98" in text or "Premium 98" in text
+        has_95 = "Premium\n95" in text or "Premium 95" in text
+        has_diesel = "Diesel" in text
+        has_gaz = "GAZ" in text or "LICHEFIAT" in text
 
-            print(f"bemol real_prices: {real_prices}")
+        idx = 0
+        b98 = b95 = diesel = lpg = None
 
-            # Определяем какие топлива есть по названиям в блоке
-            has_98 = bool(re.search(r'Premium\s*98', block, re.IGNORECASE))
-            has_95 = bool(re.search(r'Premium\s*95', block, re.IGNORECASE))
-            has_diesel = bool(re.search(r'(?:Euro\s*Diesel|Diesel)', block, re.IGNORECASE))
-            has_gaz = bool(re.search(r'(?:LICHEFIAT|GAZ)', block, re.IGNORECASE))
+        if has_98 and idx < len(prices):
+            b98 = prices[idx]; idx += 1
+        if has_95 and idx < len(prices):
+            b95 = prices[idx]; idx += 1
+        if has_diesel and idx < len(prices):
+            diesel = prices[idx]; idx += 1
+        if has_gaz and idx < len(prices):
+            lpg = prices[idx]; idx += 1
 
-            idx = 0
-            b98 = None
-            b95 = None
-            diesel = None
-            lpg = None
+        print(f"bemol result: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
 
-            if has_98 and idx < len(real_prices):
-                b98 = real_prices[idx]; idx += 1
-            if has_95 and idx < len(real_prices):
-                b95 = real_prices[idx]; idx += 1
-            if has_diesel and idx < len(real_prices):
-                diesel = real_prices[idx]; idx += 1
-            if has_gaz and idx < len(real_prices):
-                lpg = real_prices[idx]; idx += 1
-
-            print(f"bemol parsed: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
-
-            if b95 or diesel or b98:
-                result = ""
-                if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
-                if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
-                if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
-                if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
-                return result.strip()
+        if any([b98, b95, diesel, lpg]):
+            result = ""
+            if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
+            if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
+            if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
+            if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
+            return result.strip()
 
     except Exception as e:
         print(f"Fuel bemol error: {e}")
@@ -326,8 +309,8 @@ def get_fuel():
         d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
         if b or d:
             result = ""
-            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n"
-            if d: result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*"
+            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',','.')} MDL*\n"
+            if d: result += f"🔵 Дизель: *{d[0].replace(',','.')} MDL*"
             return result.strip()
     except Exception as e:
         print(f"Fuel realitatea error: {e}")
@@ -340,8 +323,8 @@ def get_fuel():
         d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
         if b or d:
             result = ""
-            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',', '.')} MDL*\n"
-            if d: result += f"🔵 Дизель: *{d[0].replace(',', '.')} MDL*"
+            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',','.')} MDL*\n"
+            if d: result += f"🔵 Дизель: *{d[0].replace(',','.')} MDL*"
             return result.strip()
     except Exception as e:
         print(f"Fuel nokta error: {e}")
@@ -421,24 +404,12 @@ async def send_evening_report(uid):
     fuel = get_fuel()
     news = get_moldova_news()
     text = (
-        f"🌙 *ВЕЧЕРНЯЯ СВОДКА*\n"
-        f"🏙 _{city}_\n"
-        f"{DIV}\n\n"
-        f"🌤 *ПОГОДА*\n"
-        f"{get_weather(city)}\n\n"
-        f"{DIV}\n"
-        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n"
-        f"{get_currency()}\n\n"
-        f"{DIV}\n"
-        f"₿ *КРИПТО*\n"
-        f"{get_bitcoin()}\n\n"
-        f"{DIV}\n"
-        f"⛽ *ТОПЛИВО BEMOL*\n"
-        f"{fuel}\n\n"
-        f"{DIV}\n"
-        f"📰 *НОВОСТИ*\n"
-        f"{news}\n\n"
-        f"{DIV}\n"
+        f"🌙 *ВЕЧЕРНЯЯ СВОДКА*\n🏙 _{city}_\n{DIV}\n\n"
+        f"🌤 *ПОГОДА*\n{get_weather(city)}\n\n{DIV}\n"
+        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n{get_currency()}\n\n{DIV}\n"
+        f"₿ *КРИПТО*\n{get_bitcoin()}\n\n{DIV}\n"
+        f"⛽ *ТОПЛИВО BEMOL*\n{fuel}\n\n{DIV}\n"
+        f"📰 *НОВОСТИ*\n{news}\n\n{DIV}\n"
         f"🌙 _Хорошего вечера!_"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
@@ -458,27 +429,14 @@ async def send_report(uid, scheduled=False):
 
     text = (
         f"{get_day_info()}{ukraine_event}\n"
-        f"{get_war_counter()}\n"
-        f"{DIV}\n\n"
-        f"🌅 *ДОБРОЕ УТРО, {city.upper()}!*\n\n"
-        f"{DIV}\n"
-        f"🌤 *ПОГОДА*\n"
-        f"{get_weather(city)}\n\n"
-        f"📅 *ПРОГНОЗ НА 3 ДНЯ*\n"
-        f"{get_forecast(city)}\n\n"
-        f"{DIV}\n"
-        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n"
-        f"{get_currency()}\n\n"
-        f"{DIV}\n"
-        f"₿ *КРИПТО*\n"
-        f"{get_bitcoin()}\n\n"
-        f"{DIV}\n"
-        f"⛽ *ТОПЛИВО BEMOL*\n"
-        f"{fuel}\n\n"
-        f"{DIV}\n"
-        f"📰 *НОВОСТИ МОЛДОВЫ*\n"
-        f"{news}\n\n"
-        f"{DIV}\n"
+        f"{get_war_counter()}\n{DIV}\n\n"
+        f"🌅 *ДОБРОЕ УТРО, {city.upper()}!*\n\n{DIV}\n"
+        f"🌤 *ПОГОДА*\n{get_weather(city)}\n\n"
+        f"📅 *ПРОГНОЗ НА 3 ДНЯ*\n{get_forecast(city)}\n\n{DIV}\n"
+        f"💱 *КУРС ВАЛЮТ* _(покупка / продажа MDL)_\n{get_currency()}\n\n{DIV}\n"
+        f"₿ *КРИПТО*\n{get_bitcoin()}\n\n{DIV}\n"
+        f"⛽ *ТОПЛИВО BEMOL*\n{fuel}\n\n{DIV}\n"
+        f"📰 *НОВОСТИ МОЛДОВЫ*\n{news}\n\n{DIV}\n"
         f"{get_fact()}"
     )
     await bot.send_message(uid, text, parse_mode="Markdown")
