@@ -254,41 +254,35 @@ def get_currency():
 def get_fuel():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-    # Источник 1: bemol.md
-    # Страница после парсинга содержит текст:
-    # "Premium\n98\n\n00.00\n\n29.95\nPremium\n95\n\n00.00\n\n26.22\nEuro\nDiesel\n\n00.00\n\n26.24\nLICHEFIAT\nGAZ\n\n00.00\n\n13.80"
-    # Просто берём ВСЕ числа XX.XX со страницы, убираем 00.00, берём первые 4
     try:
-        r = requests.get("https://bemol.md/ru/prices", timeout=10, headers=headers)
+        r = requests.get("https://bemol.md/en/prices", timeout=10, headers=headers)
         text = r.text
 
-        # Все числа формата XX.XX на странице
-        all_nums = re.findall(r'\b\d{2}\.\d{2}\b', text)
-        print(f"bemol all_nums: {all_nums}")
+        # Вырезаем блок строго между "logo-flower.png)" и "24/7"
+        match = re.search(r'logo-flower\.png\)\s*(.*?)\s*24/7', text, re.DOTALL)
+        if not match:
+            print("bemol: блок не найден")
+            raise Exception("block not found")
 
-        # Фильтруем — убираем 00.00, берём числа > 10 (цены топлива)
-        prices = [n for n in all_nums if n != "00.00" and float(n) > 10]
-        print(f"bemol prices: {prices}")
+        block = match.group(1)
+        print(f"bemol block: {repr(block)}")
 
-        # Определяем какие виды топлива есть на странице
-        has_98 = "Premium\n98" in text or "Premium 98" in text
-        has_95 = "Premium\n95" in text or "Premium 95" in text
-        has_diesel = "Diesel" in text
-        has_gaz = "GAZ" in text or "LICHEFIAT" in text
+        def pick_price(pattern):
+            m = re.search(pattern, block, re.DOTALL | re.IGNORECASE)
+            if not m:
+                return None
+            nums = re.findall(r'\d{2}\.\d{2}', m.group(0))
+            for n in reversed(nums):  # берём последнее число — реальная цена
+                if n != "00.00" and float(n) > 10:
+                    return n
+            return None
 
-        idx = 0
-        b98 = b95 = diesel = lpg = None
+        b98    = pick_price(r'Premium\s+98\s+[\d.]+\s+[\d.]+')
+        b95    = pick_price(r'Premium\s+95\s+[\d.]+\s+[\d.]+')
+        diesel = pick_price(r'(?:Euro\s+)?Diesel\s+[\d.]+\s+[\d.]+')
+        lpg    = pick_price(r'(?:LICHEFIAT\s+)?GAZ\s+[\d.]+\s+[\d.]+')
 
-        if has_98 and idx < len(prices):
-            b98 = prices[idx]; idx += 1
-        if has_95 and idx < len(prices):
-            b95 = prices[idx]; idx += 1
-        if has_diesel and idx < len(prices):
-            diesel = prices[idx]; idx += 1
-        if has_gaz and idx < len(prices):
-            lpg = prices[idx]; idx += 1
-
-        print(f"bemol result: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
+        print(f"bemol: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
 
         if any([b98, b95, diesel, lpg]):
             result = ""
@@ -298,10 +292,11 @@ def get_fuel():
             if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
             return result.strip()
 
+        print("bemol: цены не распознаны")
     except Exception as e:
         print(f"Fuel bemol error: {e}")
 
-    # Источник 2: realitatea.md
+    # Резерв: realitatea.md
     try:
         r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
         text = r.text
@@ -314,20 +309,6 @@ def get_fuel():
             return result.strip()
     except Exception as e:
         print(f"Fuel realitatea error: {e}")
-
-    # Источник 3: nokta.md
-    try:
-        r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
-        text = r.text
-        b = re.findall(r'(?:бензин|A-?95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        d = re.findall(r'(?:дизел|motorin)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        if b or d:
-            result = ""
-            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',','.')} MDL*\n"
-            if d: result += f"🔵 Дизель: *{d[0].replace(',','.')} MDL*"
-            return result.strip()
-    except Exception as e:
-        print(f"Fuel nokta error: {e}")
 
     return "данные недоступны"
 
