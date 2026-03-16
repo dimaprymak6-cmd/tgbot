@@ -251,66 +251,6 @@ def get_currency():
     except:
         return "❌ Ошибка курса валют"
 
-def get_fuel():
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-
-    try:
-        r = requests.get("https://bemol.md/en/prices", timeout=10, headers=headers)
-        text = r.text
-
-        # Вырезаем блок строго между "logo-flower.png)" и "24/7"
-        match = re.search(r'logo-flower\.png\)\s*(.*?)\s*24/7', text, re.DOTALL)
-        if not match:
-            print("bemol: блок не найден")
-            raise Exception("block not found")
-
-        block = match.group(1)
-        print(f"bemol block: {repr(block)}")
-
-        def pick_price(pattern):
-            m = re.search(pattern, block, re.DOTALL | re.IGNORECASE)
-            if not m:
-                return None
-            nums = re.findall(r'\d{2}\.\d{2}', m.group(0))
-            for n in reversed(nums):  # берём последнее число — реальная цена
-                if n != "00.00" and float(n) > 10:
-                    return n
-            return None
-
-        b98    = pick_price(r'Premium\s+98\s+[\d.]+\s+[\d.]+')
-        b95    = pick_price(r'Premium\s+95\s+[\d.]+\s+[\d.]+')
-        diesel = pick_price(r'(?:Euro\s+)?Diesel\s+[\d.]+\s+[\d.]+')
-        lpg    = pick_price(r'(?:LICHEFIAT\s+)?GAZ\s+[\d.]+\s+[\d.]+')
-
-        print(f"bemol: 98={b98} 95={b95} diesel={diesel} lpg={lpg}")
-
-        if any([b98, b95, diesel, lpg]):
-            result = ""
-            if b98:    result += f"🔴 Премиум 98: *{b98} MDL*\n"
-            if b95:    result += f"🟡 Премиум 95: *{b95} MDL*\n"
-            if diesel: result += f"🔵 Дизель Euro: *{diesel} MDL*\n"
-            if lpg:    result += f"🟢 Газ LPG: *{lpg} MDL*\n"
-            return result.strip()
-
-        print("bemol: цены не распознаны")
-    except Exception as e:
-        print(f"Fuel bemol error: {e}")
-
-    # Резерв: realitatea.md
-    try:
-        r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
-        text = r.text
-        b = re.findall(r'(?:benzin|COR.?95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
-        if b or d:
-            result = ""
-            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',','.')} MDL*\n"
-            if d: result += f"🔵 Дизель: *{d[0].replace(',','.')} MDL*"
-            return result.strip()
-    except Exception as e:
-        print(f"Fuel realitatea error: {e}")
-
-    return "данные недоступны"
 
 def get_moldova_news():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -337,7 +277,83 @@ def get_moldova_news():
         print(f"News newsmaker error: {e}")
 
     try:
-        r = requests.get("https://nokta.md/ru/", timeout=10, headers=headers)
+        r = requests.get("https://ndef get_fuel():
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+    try:
+        r = requests.get("https://bemol.md/en/prices", timeout=10, headers=headers)
+        text = r.text
+
+        # Ищем все числа XX.XX между "logo-flower.png)" и "24/7"
+        # Структура в тексте: 00.00 29.95 00.00 26.22 00.00 26.24 00.00 13.80
+        start = text.find("logo-flower.png)")
+        end = text.find("24/7", start)
+
+        if start == -1 or end == -1:
+            print(f"bemol: маркеры не найдены start={start} end={end}")
+            raise Exception("markers not found")
+
+        block = text[start:end]
+        print(f"bemol block length: {len(block)}")
+
+        # Все числа XX.XX в блоке
+        all_nums = re.findall(r'\b\d{2}\.\d{2}\b', block)
+        print(f"bemol all_nums: {all_nums}")
+
+        # Числа идут парами: 00.00 (заглушка) + реальная цена
+        # Берём только реальные (не 00.00, больше 10)
+        prices = []
+        for i in range(len(all_nums)):
+            n = all_nums[i]
+            try:
+                val = float(n)
+                if n != "00.00" and val > 10:
+                    prices.append(n)
+            except:
+                pass
+
+        print(f"bemol prices: {prices}")
+
+        # Определяем топлива по тексту блока
+        has_98     = "98" in block
+        has_95     = "95" in block
+        has_diesel = "Diesel" in block or "diesel" in block
+        has_gaz    = "GAZ" in block or "LICHEFIAT" in block
+
+        result = ""
+        idx = 0
+        if has_98 and idx < len(prices):
+            result += f"🔴 Премиум 98: *{prices[idx]} MDL*\n"; idx += 1
+        if has_95 and idx < len(prices):
+            result += f"🟡 Премиум 95: *{prices[idx]} MDL*\n"; idx += 1
+        if has_diesel and idx < len(prices):
+            result += f"🔵 Дизель Euro: *{prices[idx]} MDL*\n"; idx += 1
+        if has_gaz and idx < len(prices):
+            result += f"🟢 Газ LPG: *{prices[idx]} MDL*\n"; idx += 1
+
+        if result:
+            return result.strip()
+
+        print("bemol: prices пустой")
+
+    except Exception as e:
+        print(f"Fuel bemol error: {e}")
+
+    # Резерв
+    try:
+        r = requests.get("https://realitatea.md/", timeout=10, headers=headers)
+        text = r.text
+        b = re.findall(r'(?:benzin|COR.?95)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        d = re.findall(r'(?:motorin|дизел)[^\d]*(\d{2}[.,]\d{2})', text, re.IGNORECASE)
+        if b or d:
+            result = ""
+            if b: result += f"🟡 Бензин А-95: *{b[0].replace(',','.')} MDL*\n"
+            if d: result += f"🔵 Дизель: *{d[0].replace(',','.')} MDL*"
+            return result.strip()
+    except Exception as e:
+        print(f"Fuel realitatea error: {e}")
+
+    return "данные недоступны"okta.md/ru/", timeout=10, headers=headers)
         text = r.text
         headlines = re.findall(r'<h\d[^>]*>\s*<a[^>]*>([^<]{25,150})</a>', text)
         headlines = [h.strip() for h in headlines if len(h.strip()) > 25]
